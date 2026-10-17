@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shifra Spa - Sistema Integral de Control de Inventarios & Dosificación</title>
+  
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- SheetJS para Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Chart.js para Gráficos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Tipografías e Íconos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ENCABEZADO SUPERIOR PERMANENTE -->
+  <header class="main-header">
+    <div class="brand" onclick="openWelcomeScreen()">
+      <i class="fa-solid fa-spa"></i>
+      <span>SHIFRA SPA</span>
+    </div>
+
+    <!-- BOTONES DE ACCIÓN SUPERIOR DERECHA -->
+    <div class="top-action-bar">
+      <button class="btn-top btn-export" onclick="exportToExcel()"><i class="fa-solid fa-file-export"></i> Exportar</button>
+      <label class="btn-top btn-excel">
+        <i class="fa-solid fa-file-excel"></i> Cargar Excel
+        <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" onchange="importExcel(event)" style="display:none;">
+      </label>
+      <button class="btn-top btn-backup" onclick="exportBackupJSON()"><i class="fa-solid fa-download"></i> Respaldar</button>
+      <button class="btn-top btn-clear" onclick="confirmClearInventory()"><i class="fa-solid fa-triangle-exclamation"></i> Borrar Base</button>
+      <button class="btn-top btn-cover" onclick="openWelcomeScreen()"><i class="fa-solid fa-arrow-left"></i> Portada</button>
+    </div>
+  </header>
+
+  <!-- BARRA DE NAVEGACIÓN POR PESTAÑAS -->
+  <nav class="sub-nav-bar">
+    <button class="nav-tab active" id="tab-btn-inicio" onclick="switchTab('inicio')"><i class="fa-solid fa-house"></i> Inicio</button>
+    <button class="nav-tab" id="tab-btn-inventario" onclick="switchTab('inventario')"><i class="fa-solid fa-boxes-stacked"></i> Inventario</button>
+    <button class="nav-tab" id="tab-btn-dosificacion" onclick="switchTab('dosificacion')"><i class="fa-solid fa-flask"></i> Dosificación</button>
+    <button class="nav-tab" id="tab-btn-servicios" onclick="switchTab('servicios')"><i class="fa-solid fa-hand-holding-heart"></i> Por Servicios</button>
+    <button class="nav-tab" id="tab-btn-tendencias" onclick="switchTab('tendencias')"><i class="fa-solid fa-chart-line"></i> Tendencias</button>
+    <button class="nav-tab" id="tab-btn-graficos" onclick="switchTab('graficos')"><i class="fa-solid fa-chart-pie"></i> Gráficos</button>
+    <button class="nav-tab" id="tab-btn-traspaso" onclick="openTraspasoModal()"><i class="fa-solid fa-right-left"></i> Traspaso</button>
+    <button class="nav-tab" id="tab-btn-historial" onclick="openHistorialModal()"><i class="fa-solid fa-clock-rotate-left"></i> Historial</button>
+  </nav>
+
+  <!-- PANTALLA DE BIENVENIDA / PORTADA -->
+  <div id="welcome-screen" class="welcome-overlay">
+    <div class="welcome-card">
+      <div class="welcome-logo"><i class="fa-solid fa-spa"></i></div>
+      <h1 class="welcome-title">SHIFRA SPA</h1>
+      <p class="welcome-subtitle">Sistema Integral de Control de Inventarios & Dosificación</p>
+      <div class="welcome-divider"></div>
+      <button class="btn-welcome" onclick="closeWelcomeScreen()"><i class="fa-solid fa-right-to-bracket"></i> INGRESAR AL SISTEMA</button>
+    </div>
+  </div>
+
+  <!-- CONTENEDOR PRINCIPAL -->
+  <main class="main-content">
+
+    <!-- 1. INICIO -->
+    <section id="sec-inicio" class="tab-content active">
+      <div class="hero-section">
+        <div class="hero-icon"><i class="fa-solid fa-spa"></i></div>
+        <h2>SHIFRA SPA</h2>
+        <p>Sistema Integral de Control de Inventarios & Dosificación</p>
+      </div>
+
+      <div class="cards-grid">
+        <div class="card" onclick="switchTab('inventario')">
+          <i class="fa-solid fa-boxes-stacked"></i>
+          <h3>INVENTARIO GENERAL</h3>
+          <p>Consulta el catálogo de artículos, existencias por almacén y alertas de stock bajo.</p>
+          <span class="card-link">Ir al Almacén &rarr;</span>
+        </div>
+        <div class="card" onclick="switchTab('dosificacion')">
+          <i class="fa-solid fa-flask"></i>
+          <h3>DOSIFICACIÓN DIARIA</h3>
+          <p>Registra las salidas continuas e insumos utilizados durante la jornada diaria.</p>
+          <span class="card-link">Dosificar &rarr;</span>
+        </div>
+        <div class="card" onclick="switchTab('servicios')">
+          <i class="fa-solid fa-hand-holding-heart"></i>
+          <h3>POR SERVICIOS</h3>
+          <p>Aplica paquetes de tratamientos y descuenta de forma automática los insumos.</p>
+          <span class="card-link">Servicios &rarr;</span>
+        </div>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <span class="metric-label">TOTAL DE SKUS</span>
+          <div id="metric-skus" class="metric-val">0</div>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">PIEZAS EN EXISTENCIA</span>
+          <div id="metric-stock" class="metric-val">0</div>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">ALERTAS STOCK BAJO (&le;3)</span>
+          <div id="metric-alerts" class="metric-val danger">0</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. INVENTARIO -->
+    <section id="sec-inventario" class="tab-content">
+      <div class="section-header-title">
+        <h2>CONTROL DE INVENTARIO</h2>
+        <button class="btn-gold-action" onclick="openAddModal()"><i class="fa-solid fa-plus"></i> Nuevo Artículo</button>
+      </div>
+
+      <div class="metrics-grid-2">
+        <div class="metric-card-sm">
+          <span class="metric-label-sm">TOTAL DE ARTÍCULOS EN ALMACÉN</span>
+          <div id="inv-total-art" class="metric-val-sm">0</div>
+        </div>
+        <div class="metric-card-sm">
+          <span class="metric-label-sm danger">ALERTAS DE STOCK BAJO (&le;3)</span>
+          <div id="inv-low-art" class="metric-val-sm danger">0</div>
+        </div>
+      </div>
+
+      <div class="category-pills" id="category-pills">
+        <button class="pill active" onclick="filterByStore('TODOS')">TODOS los almacenes</button>
+      </div>
+
+      <div class="search-filter-row">
+        <div class="search-bar">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="inv-search-input" placeholder="Buscar por nombre, categoría o ubicación..." onkeyup="renderInventoryTable()">
+        </div>
+        <button class="btn-filter-toggle" onclick="toggleLowStockFilter()"><i class="fa-solid fa-filter"></i> Ocultar / Ver Stock Bajo</button>
+      </div>
+
+      <div class="table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Categoría</th>
+              <th>Artículo</th>
+              <th>Ubicación</th>
+              <th>Unidad</th>
+              <th>Stock Actual</th>
+              <th>Estatus</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="inventory-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 3. DOSIFICACIÓN -->
+    <section id="sec-dosificacion" class="tab-content">
+      <div class="section-header-title">
+        <div>
+          <h2>MÓDULO DE DOSIFICACIÓN DIARIA</h2>
+          <p class="subtitle">Captura las salidas continuas o consumos del turno para descontarlos en lote.</p>
+        </div>
+        <button class="btn-tool" onclick="openHistorialModal()"><i class="fa-solid fa-book"></i> Historial por Días</button>
+      </div>
+
+      <div class="two-column-layout">
+        <div class="card-box">
+          <h3><i class="fa-solid fa-plus-circle"></i> AGREGAR INSUMO A LISTA</h3>
+          <div class="form-group">
+            <label>Seleccionar Artículo</label>
+            <select id="dosi-select-item" class="form-control" onchange="updateDosiAvailableStock()"></select>
+          </div>
+          <div class="stock-info-box">
+            <span>Stock Disponible:</span>
+            <strong id="dosi-stock-label">0 Piezas</strong>
+          </div>
+          <div class="form-group">
+            <label>Cantidad Dosificada / Salida</label>
+            <input type="number" id="dosi-qty-input" class="form-control" min="1" value="1">
+          </div>
+          <button class="btn-gold-full" onclick="addDosiToList()"><i class="fa-solid fa-cart-plus"></i> Agregar a Lista del Día</button>
+        </div>
+
+        <div class="card-box">
+          <h3><i class="fa-solid fa-list-check"></i> INSUMOS EN LISTA PARA DESCONTAR</h3>
+          <table class="data-table-sm">
+            <thead>
+              <tr>
+                <th>Almacén</th>
+                <th>Artículo</th>
+                <th>Cantidad Salida</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="dosi-pending-list"></tbody>
+          </table>
+          <button class="btn-green-full" onclick="confirmDosiBatch()"><i class="fa-solid fa-circle-check"></i> CONFIRMAR Y DESCONTAR DOSIFICACIÓN</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. POR SERVICIOS -->
+    <section id="sec-servicios" class="tab-content">
+      <div class="section-header-title">
+        <div>
+          <h2>DOSIFICACIÓN POR SERVICIOS / TRATAMIENTOS</h2>
+          <p class="subtitle">Configura los paquetes de insumos por servicio y descuenta automáticamente el stock.</p>
+        </div>
+        <button class="btn-gold-action" onclick="openNewServiceModal()"><i class="fa-solid fa-plus"></i> Nuevo Servicio / Receta</button>
+      </div>
+
+      <div class="two-column-layout">
+        <div class="card-box">
+          <h3><i class="fa-solid fa-hand-holding-heart"></i> APLICAR SERVICIO AL TURNO</h3>
+          <div class="form-group">
+            <label>Seleccionar Servicio</label>
+            <select id="service-select" class="form-control" onchange="previewServiceRecipe()"></select>
+          </div>
+          <div class="form-group">
+            <label>Cantidad de Servicios Realizados</label>
+            <input type="number" id="service-count-input" class="form-control" value="1" min="1" onchange="previewServiceRecipe()">
+          </div>
+          <div class="recipe-preview-box">
+            <label>Insumos que se descontarán:</label>
+            <div id="recipe-preview-list">Selecciona un servicio...</div>
+          </div>
+          <button class="btn-green-full" onclick="applyServiceToStock()"><i class="fa-solid fa-circle-check"></i> DESCONTAR INSUMOS POR SERVICIO</button>
+        </div>
+
+        <div class="card-box">
+          <h3><i class="fa-solid fa-list"></i> CATÁLOGO DE SERVICIOS CONFIGURADOS</h3>
+          <table class="data-table-sm">
+            <thead>
+              <tr>
+                <th>Servicio</th>
+                <th>Insumos / Receta</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="services-catalog-list"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. TENDENCIAS -->
+    <section id="sec-tendencias" class="tab-content">
+      <div class="section-header-title">
+        <div>
+          <h2>TENDENCIAS DE CONSUMO</h2>
+          <p class="subtitle">Consulta el volumen histórico acumulado de salidas por artículo.</p>
+        </div>
+      </div>
+
+      <div class="two-column-layout">
+        <div class="card-box">
+          <h3><i class="fa-solid fa-chart-line"></i> ANÁLISIS POR INSUMO</h3>
+          <div class="form-group">
+            <label>Buscar Artículo</label>
+            <input type="text" id="trend-search-input" class="form-control" placeholder="Escribe para filtrar..." onkeyup="filterTrendList()">
+          </div>
+          <select id="trend-item-select" size="6" class="form-control select-list" onchange="loadItemTrendDetails()"></select>
+          <div class="total-trend-box">
+            <span>TOTAL CONSUMIDO HISTÓRICO REGISTRADO</span>
+            <div id="trend-total-val" class="trend-big-val">0 Piezas</div>
+          </div>
+        </div>
+
+        <div class="card-box">
+          <h3><i class="fa-solid fa-clock-rotate-left"></i> DESGLOSE DE SALIDAS HISTÓRICAS</h3>
+          <table class="data-table-sm">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Almacén</th>
+                <th>Cantidad Salida</th>
+              </tr>
+            </thead>
+            <tbody id="trend-history-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. GRÁFICOS -->
+    <section id="sec-graficos" class="tab-content">
+      <div class="section-header-title">
+        <div>
+          <h2>ANÁLISIS GRÁFICO DE ALMACENES</h2>
+          <p class="subtitle">Visualización en tiempo real de volúmenes, categorías y alertas.</p>
+        </div>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <span class="metric-label">TOTAL DE SKUS</span>
+          <div id="g-skus" class="metric-val">0</div>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">PIEZAS FÍSICAS TOTALES</span>
+          <div id="g-stock" class="metric-val">0</div>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">ALMACENES ACTIVOS</span>
+          <div id="g-stores" class="metric-val blue">0</div>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">STOCK CRÍTICO (&le;3)</span>
+          <div id="g-critical" class="metric-val danger">0</div>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="chart-box">
+          <h3>DISTRIBUCIÓN DE SKUS POR ALMACÉN</h3>
+          <canvas id="chart-skus"></canvas>
+        </div>
+        <div class="chart-box">
+          <h3>VOLUMEN TOTAL DE PIEZAS POR ALMACÉN</h3>
+          <canvas id="chart-volume"></canvas>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: TRASPASO DE ALMACÉN -->
+  <div id="modal-traspaso" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-right-left"></i> Traspaso de Almacén</h3>
+        <button class="close-btn" onclick="closeTraspasoModal()">&times;</button>
+      </div>
+      <div class="form-group">
+        <label>Artículo a Traspasar</label>
+        <select id="traspaso-select-item" class="form-control" onchange="updateTraspasoOriginInfo()"></select>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label>Almacén Origen</label>
+          <input type="text" id="traspaso-origin-store" class="form-control" readonly>
+        </div>
+        <div class="form-group">
+          <label>Stock Disponible</label>
+          <div id="traspaso-origin-stock" class="stock-highlight">0 Piezas</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Almacén / Categoría Destino</label>
+        <input type="text" id="traspaso-dest-store" class="form-control" placeholder="Ej. BARBERIA, ESTETICA...">
+      </div>
+      <div class="form-group">
+        <label>Cantidad a Traspasar</label>
+        <input type="number" id="traspaso-qty-input" class="form-control" value="1" min="1">
+      </div>
+      <button class="btn-gold-full" onclick="executeTraspaso()">Ejecutar Traspaso</button>
+    </div>
+  </div>
+
+  <!-- MODAL: HISTORIAL GENERAL -->
+  <div id="modal-historial" class="modal-overlay" style="display:none;">
+    <div class="modal-card wide">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-clock-rotate-left"></i> Historial General de Movimientos</h3>
+        <button class="close-btn" onclick="closeHistorialModal()">&times;</button>
+      </div>
+      <div class="history-filter-bar">
+        <div class="form-group">
+          <label>Desde Fecha</label>
+          <input type="date" id="hist-date-from" class="form-control" onchange="renderHistorialModalTable()">
+        </div>
+        <div class="form-group">
+          <label>Hasta Fecha</label>
+          <input type="date" id="hist-date-to" class="form-control" onchange="renderHistorialModalTable()">
+        </div>
+        <button class="btn-tool" onclick="clearHistorialFilters()">Limpiar Filtro</button>
+      </div>
+
+      <div class="table-card max-height-table">
+        <table class="data-table-sm">
+          <thead>
+            <tr>
+              <th>Fecha y Hora</th>
+              <th>Tipo</th>
+              <th>Artículo</th>
+              <th>Detalle / Cambio</th>
+            </tr>
+          </thead>
+          <tbody id="historial-modal-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-danger-outline" onclick="clearFullHistory()"><i class="fa-solid fa-trash"></i> Borrar Historial</button>
+        <button class="btn-dark" onclick="closeHistorialModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: AGREGAR NUEVO ARTÍCULO -->
+  <div id="modal-add-item" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-plus-circle"></i> Nuevo Artículo</h3>
+        <button class="close-btn" onclick="closeAddModal()">&times;</button>
+      </div>
+      <div class="form-group">
+        <label>Categoría / Almacén</label>
+        <input type="text" id="add-item-cat" class="form-control" placeholder="Ej. INSUMOS, BEBIDAS, RETAIL...">
+      </div>
+      <div class="form-group">
+        <label>Nombre del Artículo</label>
+        <input type="text" id="add-item-name" class="form-control" placeholder="Ej. Azucar">
+      </div>
+      <div class="form-group">
+        <label>Ubicación / Detalle</label>
+        <input type="text" id="add-item-location" class="form-control" placeholder="Ej. Almacen General, Cocina...">
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label>Unidad</label>
+          <input type="text" id="add-item-unit" class="form-control" value="Piezas">
+        </div>
+        <div class="form-group">
+          <label>Stock Inicial</label>
+          <input type="number" id="add-item-stock" class="form-control" value="5">
+        </div>
+      </div>
+      <button class="btn-gold-full" onclick="saveNewItem()">Guardar Artículo</button>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICACIÓN -->
+  <div id="toast" class="toast"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
