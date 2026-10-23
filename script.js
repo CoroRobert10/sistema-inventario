@@ -1,5 +1,5 @@
 // ==============================================================================
-// SHIFRA SPA - CÓDIGO INTEGRADOR (BÚSQUEDA Y FILTROS EN DOSIFICACIÓN)
+// SHIFRA SPA - CÓDIGO COMPLETO ESTABILIZADO Y ROBUSTO
 // ==============================================================================
 
 const SUPABASE_URL = 'https://uhkahspaqwcldvutzmnm.supabase.co';
@@ -397,7 +397,10 @@ function updateDosiAvailableStock() {
 }
 
 function addDosiToList() {
-  const name = document.getElementById('dosi-select-item').value;
+  const select = document.getElementById('dosi-select-item');
+  if (!select || !select.value) return;
+
+  const name = select.value;
   const qty = Number(document.getElementById('dosi-qty-input').value);
 
   const item = inventory.find(i => i.name === name);
