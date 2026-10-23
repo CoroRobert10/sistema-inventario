@@ -1,5 +1,5 @@
 // ==============================================================================
-// SHIFRA SPA - CÓDIGO COMPLETO INTEGRADOR CON SUPABASE Y PRECIOS SEGUROS
+// SHIFRA SPA - CÓDIGO COMPLETO INTEGRADOR SOLO POR UBICACIONES
 // ==============================================================================
 
 const SUPABASE_URL = 'https://uhkahspaqwcldvutzmnm.supabase.co';
@@ -16,8 +16,7 @@ let servicesCatalog = [
   { name: 'HOL 80', recipe: [{ name: 'Aceite para Masajes', qty: 50, unit: 'ml' }] }
 ];
 
-let selectedStoreFilter = 'TODOS';
-let hideLowStockFlag = false;
+let selectedLocationFilter = 'TODOS';
 let chartSkusInstance = null;
 let chartVolumeInstance = null;
 
@@ -29,10 +28,9 @@ window.addEventListener('DOMContentLoaded', () => {
 function openWelcomeScreen() { document.getElementById('welcome-screen').style.display = 'flex'; }
 function closeWelcomeScreen() { document.getElementById('welcome-screen').style.display = 'none'; }
 
-// CARGAR DATOS (CON PRIORIDAD LOCAL SEGURA)
+// CARGAR DATOS
 async function loadDataFromSupabase() {
   try {
-    // 1. Cargar de inmediato desde memoria local para que nunca aparezca vacío
     const localInv = localStorage.getItem('shifra_spa_db');
     const localHist = localStorage.getItem('shifra_spa_history');
 
@@ -40,7 +38,6 @@ async function loadDataFromSupabase() {
     if (localHist) historyLogs = JSON.parse(localHist);
     renderAllViews();
 
-    // 2. Sincronizar con Supabase en segundo plano
     const { data: invData } = await supabaseClient.from('inventory').select('*');
     const { data: histData } = await supabaseClient.from('history').select('*').order('id', { ascending: false });
     const { data: servData } = await supabaseClient.from('services').select('*');
@@ -66,20 +63,17 @@ async function loadDataFromSupabase() {
   }
 }
 
-// GUARDAR Y SINCRONIZAR SEGURO
+// GUARDAR Y SINCRONIZAR
 async function saveAndSync() {
-  // Guardar localmente primero
   localStorage.setItem('shifra_spa_db', JSON.stringify(inventory));
   localStorage.setItem('shifra_spa_history', JSON.stringify(historyLogs));
   renderAllViews();
 
   try {
-    // Sincronización segura con Supabase
     await supabaseClient.from('inventory').delete().not('id', 'is', null);
     if (inventory.length > 0) {
       const cleanInv = inventory.map(({ id, ...rest }) => rest);
-      const { error } = await supabaseClient.from('inventory').insert(cleanInv);
-      if (error) console.error("Error al insertar en Supabase:", error);
+      await supabaseClient.from('inventory').insert(cleanInv);
     }
 
     await supabaseClient.from('history').delete().not('id', 'is', null);
@@ -90,7 +84,7 @@ async function saveAndSync() {
     showToast('Sincronizado en la nube con éxito.');
   } catch (e) {
     console.error("Aviso de sincronización:", e);
-    showToast('Guardado localmente (Revisa conexión a nube)');
+    showToast('Guardado localmente');
   }
 }
 
@@ -110,7 +104,8 @@ function switchTab(tabId) {
 
 function renderAllViews() {
   updateMetrics();
-  renderCategoryPills();
+  renderLocationPills();
+  populateColumnFilterSelect();
   renderInventoryTable();
   populateDosiDropdown();
   renderServicesCatalog();
@@ -120,44 +115,55 @@ function renderAllViews() {
 function updateMetrics() {
   const skus = inventory.length;
   const stock = inventory.reduce((a, b) => a + Number(b.stock || 0), 0);
-  const low = inventory.filter(i => Number(i.stock) <= 3).length;
 
-  document.getElementById('metric-skus').innerText = skus;
-  document.getElementById('metric-stock').innerText = stock;
-  document.getElementById('metric-alerts').innerText = low;
+  const mSkus = document.getElementById('metric-skus');
+  const mStock = document.getElementById('metric-stock');
+  const invTotal = document.getElementById('inv-total-art');
 
-  document.getElementById('inv-total-art').innerText = skus;
-  document.getElementById('inv-low-art').innerText = low;
+  if (mSkus) mSkus.innerText = skus;
+  if (mStock) mStock.innerText = stock;
+  if (invTotal) invTotal.innerText = skus;
 
-  document.getElementById('g-skus').innerText = skus;
-  document.getElementById('g-stock').innerText = stock;
-  document.getElementById('g-critical').innerText = low;
+  const gSkus = document.getElementById('g-skus');
+  const gStock = document.getElementById('g-stock');
+  const gStores = document.getElementById('g-stores');
 
-  const stores = [...new Set(inventory.map(i => i.cat || 'General'))].length;
-  document.getElementById('g-stores').innerText = stores;
+  if (gSkus) gSkus.innerText = skus;
+  if (gStock) gStock.innerText = stock;
+
+  const locations = [...new Set(inventory.map(i => i.detail || 'General'))].length;
+  if (gStores) gStores.innerText = locations;
 }
 
-// INVENTARIO
-function renderCategoryPills() {
+// INVENTARIO Y FILTROS POR UBICACIÓN
+function renderLocationPills() {
   const container = document.getElementById('category-pills');
   if (!container) return;
-  const stores = ['TODOS', ...new Set(inventory.map(i => i.cat || 'General'))];
+  const locations = ['TODOS', ...new Set(inventory.map(i => i.detail || 'General'))];
 
-  container.innerHTML = stores.map(store => `
-    <button class="pill ${selectedStoreFilter === store ? 'active' : ''}" onclick="filterByStore('${store}')">
-      ${store === 'TODOS' ? 'TODOS los almacenes' : store.toUpperCase()}
+  container.innerHTML = locations.map(loc => `
+    <button class="pill ${selectedLocationFilter === loc ? 'active' : ''}" onclick="filterByLocation('${loc}')">
+      ${loc === 'TODOS' ? 'TODAS las ubicaciones' : loc.toUpperCase()}
     </button>
   `).join('');
 }
 
-function filterByStore(store) {
-  selectedStoreFilter = store;
-  renderCategoryPills();
-  renderInventoryTable();
+function populateColumnFilterSelect() {
+  const select = document.getElementById('column-filter-select');
+  if (!select) return;
+  const locations = [...new Set(inventory.map(i => i.detail || 'General'))];
+  
+  const currentVal = select.value;
+  select.innerHTML = `<option value="TODOS">Filtrar por Ubicación...</option>` + 
+    locations.map(l => `<option value="${l}">${l}</option>`).join('');
+  select.value = currentVal;
 }
 
-function toggleLowStockFilter() {
-  hideLowStockFlag = !hideLowStockFlag;
+function filterByLocation(loc) {
+  selectedLocationFilter = loc;
+  const select = document.getElementById('column-filter-select');
+  if (select) select.value = loc;
+  renderLocationPills();
   renderInventoryTable();
 }
 
@@ -168,32 +174,36 @@ function renderInventoryTable() {
 
   const searchInput = document.getElementById('inv-search-input');
   const search = searchInput ? searchInput.value.toLowerCase() : '';
+  
+  const colSelect = document.getElementById('column-filter-select');
+  const columnFilter = colSelect ? colSelect.value : 'TODOS';
 
   let list = inventory.filter(i => {
-    const matchSearch = (i.name && i.name.toLowerCase().includes(search)) || (i.cat && i.cat.toLowerCase().includes(search));
-    const matchStore = selectedStoreFilter === 'TODOS' || (i.cat || 'General').toUpperCase() === selectedStoreFilter.toUpperCase();
-    const matchLow = hideLowStockFlag ? Number(i.stock) <= 3 : true;
-    return matchSearch && matchStore && matchLow;
+    const matchSearch = (i.name && i.name.toLowerCase().includes(search)) || 
+                        (i.detail && i.detail.toLowerCase().includes(search));
+    
+    const locValue = i.detail || 'General';
+    const matchLocation = (selectedLocationFilter === 'TODOS' || locValue.toUpperCase() === selectedLocationFilter.toUpperCase()) &&
+                          (columnFilter === 'TODOS' || locValue.toUpperCase() === columnFilter.toUpperCase());
+    
+    return matchSearch && matchLocation;
   });
 
   if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#888;">No hay artículos registrados.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#888;">No hay artículos registrados.</td></tr>`;
     return;
   }
 
   list.forEach((item, index) => {
-    const isLow = Number(item.stock) <= 3;
     const formattedPrice = Number(item.price || 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><span class="badge-tag">${(item.cat || 'General').toUpperCase()}</span></td>
       <td><strong>${item.name}</strong></td>
       <td>${item.detail || 'Almacen General'}</td>
       <td>${item.unit || 'Piezas'}</td>
       <td><strong style="color: var(--gold-dark);">${formattedPrice}</strong></td>
       <td><strong>${item.stock}</strong></td>
-      <td><span class="badge-status ${isLow ? 'low' : ''}">${isLow ? 'Stock Bajo' : 'Normal'}</span></td>
       <td>
         <div class="action-btn-group">
           <button class="btn-icon" title="Traspasar" onclick="openTraspasoModalForItem(${index})"><i class="fa-solid fa-right-left"></i></button>
@@ -219,7 +229,7 @@ function deleteItem(index) {
   }
 }
 
-// IMPORTAR EXCEL (FUSIÓN INTELIGENTE POR CATEGORÍA)
+// IMPORTAR EXCEL (FUSIÓN INTELIGENTE POR UBICACIÓN)
 function importExcel(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -240,20 +250,19 @@ function importExcel(e) {
         json.forEach(row => {
           const cat = String(row['Categoría'] || row['CATEGORIA'] || row['CATEGORÍA'] || row['Cat'] || firstSheetName).trim().toUpperCase();
           const name = String(row['Artículo'] || row['ARTICULO'] || row['ARTÍCULO'] || row['Nombre'] || row['Item'] || 'Sin Nombre').trim();
-          const detail = String(row['Detalle'] || row['DETALLE'] || row['Ubicación'] || row['UBICACIÓN'] || row['Ubicacion'] || row['UBICACION'] || row['Presentación'] || '').trim();
+          const detail = String(row['Ubicación'] || row['UBICACIÓN'] || row['Ubicacion'] || row['UBICACION'] || row['Detalle'] || row['DETALLE'] || 'Almacen General').trim();
           const unit = String(row['Unidad'] || row['UNIDAD'] || row['Medida'] || row['MEDIDA'] || 'Piezas').trim();
           const stock = Number(row['Stock'] || row['STOCK'] || row['Inventario'] || row['INVENTARIO'] || row['Cantidad'] || 0);
           const price = Number(row['Precio'] || row['PRECIO'] || row['price'] || 0);
 
           const existingIndex = inventory.findIndex(i => 
             i.name && i.name.toLowerCase() === name.toLowerCase() && 
-            (i.cat || 'GENERAL').toUpperCase() === cat
+            (i.detail || 'ALMACEN GENERAL').toUpperCase() === detail.toUpperCase()
           );
 
           if (existingIndex !== -1) {
             inventory[existingIndex].stock = stock;
             inventory[existingIndex].price = price > 0 ? price : inventory[existingIndex].price;
-            inventory[existingIndex].detail = detail || inventory[existingIndex].detail;
             inventory[existingIndex].unit = unit || inventory[existingIndex].unit;
             updatedCount++;
           } else {
@@ -311,7 +320,7 @@ function populateDosiDropdown() {
   inventory.forEach(item => {
     const opt = document.createElement('option');
     opt.value = item.name;
-    opt.innerText = `${item.name} (${item.cat || 'General'}) — Stock: ${item.stock} ${item.unit || 'Piezas'}`;
+    opt.innerText = `${item.name} (${item.detail || 'General'}) — Stock: ${item.stock} ${item.unit || 'Piezas'}`;
     select.appendChild(opt);
   });
   updateDosiAvailableStock();
@@ -335,7 +344,7 @@ function addDosiToList() {
   const item = inventory.find(i => i.name === name);
   if (!item) return;
 
-  dosiPendingList.push({ cat: item.cat || 'General', name: item.name, qty, unit: item.unit || 'Piezas' });
+  dosiPendingList.push({ cat: item.detail || 'General', name: item.name, qty, unit: item.unit || 'Piezas' });
   renderDosiPendingList();
 }
 
@@ -377,7 +386,7 @@ function confirmDosiBatch() {
         time: timeStr,
         type: 'Dosificación',
         item: item.name,
-        detail: `Salida dosificada: -${p.qty} ${p.unit} (${item.cat || 'General'})`
+        detail: `Salida dosificada: -${p.qty} ${p.unit} (${item.detail || 'General'})`
       });
     }
   });
@@ -396,7 +405,7 @@ function populateTrendSelect() {
   inventory.forEach(i => {
     const opt = document.createElement('option');
     opt.value = i.name;
-    opt.innerText = `${i.name} (${(i.cat || 'General').toUpperCase()})`;
+    opt.innerText = `${i.name} (${(i.detail || 'General').toUpperCase()})`;
     select.appendChild(opt);
   });
 }
@@ -447,9 +456,9 @@ function renderServicesCatalog() {
 
 // GRÁFICOS
 function renderCharts() {
-  const stores = [...new Set(inventory.map(i => i.cat || 'General'))];
-  const skuCounts = stores.map(s => inventory.filter(i => (i.cat || 'General') === s).length);
-  const volumeCounts = stores.map(s => inventory.filter(i => (i.cat || 'General') === s).reduce((a, b) => a + Number(b.stock), 0));
+  const locations = [...new Set(inventory.map(i => i.detail || 'General'))];
+  const skuCounts = locations.map(l => inventory.filter(i => (i.detail || 'General') === l).length);
+  const volumeCounts = locations.map(l => inventory.filter(i => (i.detail || 'General') === l).reduce((a, b) => a + Number(b.stock), 0));
 
   if (chartSkusInstance) chartSkusInstance.destroy();
   if (chartVolumeInstance) chartVolumeInstance.destroy();
@@ -459,7 +468,7 @@ function renderCharts() {
     chartSkusInstance = new Chart(ctxSkus.getContext('2d'), {
       type: 'doughnut',
       data: {
-        labels: stores,
+        labels: locations,
         datasets: [{ data: skuCounts, backgroundColor: ['#a88d55', '#333333', '#3498db', '#e74c3c'] }]
       }
     });
@@ -470,7 +479,7 @@ function renderCharts() {
     chartVolumeInstance = new Chart(ctxVol.getContext('2d'), {
       type: 'bar',
       data: {
-        labels: stores,
+        labels: locations,
         datasets: [{ label: 'Piezas Total', data: volumeCounts, backgroundColor: '#bda26b' }]
       }
     });
@@ -516,7 +525,6 @@ function openAddModal() { document.getElementById('modal-add-item').style.displa
 function closeAddModal() { document.getElementById('modal-add-item').style.display = 'none'; }
 
 function saveNewItem() {
-  const cat = document.getElementById('add-item-cat').value.trim() || 'General';
   const name = document.getElementById('add-item-name').value.trim();
   const detail = document.getElementById('add-item-location').value.trim() || 'Almacen General';
   const unit = document.getElementById('add-item-unit').value.trim() || 'Piezas';
@@ -525,7 +533,7 @@ function saveNewItem() {
 
   if (!name) return alert('Escribe el nombre del artículo.');
 
-  inventory.push({ cat, name, detail, unit, stock, price });
+  inventory.push({ cat: 'GENERAL', name, detail, unit, stock, price });
   saveAndSync();
   closeAddModal();
 }
