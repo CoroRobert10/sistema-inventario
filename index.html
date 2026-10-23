@@ -173,18 +173,35 @@
       <div class="two-column-layout">
         <div class="card-box">
           <h3><i class="fa-solid fa-plus-circle"></i> AGREGAR INSUMO A LISTA</h3>
+          
+          <!-- FILTROS RÁPIDOS DE DOSIFICACIÓN POR ÁREA Y BÚSQUEDA -->
+          <div class="form-group">
+            <label>Filtrar por Área / Ubicación</label>
+            <select id="dosi-filter-location" class="form-control" onchange="populateDosiDropdown()">
+              <option value="TODOS">Todas las áreas...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Buscar Producto</label>
+            <input type="text" id="dosi-search-input" class="form-control" placeholder="Escribe para buscar..." onkeyup="populateDosiDropdown()">
+          </div>
+
           <div class="form-group">
             <label>Seleccionar Artículo</label>
             <select id="dosi-select-item" class="form-control" onchange="updateDosiAvailableStock()"></select>
           </div>
+
           <div class="stock-info-box">
             <span>Stock Disponible:</span>
             <strong id="dosi-stock-label">0 Piezas</strong>
           </div>
+
           <div class="form-group">
             <label>Cantidad Dosificada / Salida</label>
             <input type="number" id="dosi-qty-input" class="form-control" min="1" value="1">
           </div>
+
           <button class="btn-gold-full" onclick="addDosiToList()"><i class="fa-solid fa-cart-plus"></i> Agregar a Lista del Día</button>
         </div>
 
