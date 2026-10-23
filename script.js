@@ -1,5 +1,5 @@
 // ==============================================================================
-// SHIFRA SPA - CÓDIGO INTEGRADOR CORREGIDO (UBICACIONES Y LECTURA SEGURA)
+// SHIFRA SPA - CÓDIGO INTEGRADOR (BÚSQUEDA Y FILTROS EN DOSIFICACIÓN)
 // ==============================================================================
 
 const SUPABASE_URL = 'https://uhkahspaqwcldvutzmnm.supabase.co';
@@ -28,7 +28,7 @@ window.addEventListener('DOMContentLoaded', () => {
 function openWelcomeScreen() { document.getElementById('welcome-screen').style.display = 'flex'; }
 function closeWelcomeScreen() { document.getElementById('welcome-screen').style.display = 'none'; }
 
-// CARGAR DATOS (LOCAL PRIMERO, LUEGO NUBE)
+// CARGAR DATOS
 async function loadDataFromSupabase() {
   try {
     const localInv = localStorage.getItem('shifra_spa_db');
@@ -43,7 +43,7 @@ async function loadDataFromSupabase() {
     
     renderAllViews();
 
-    const { data: invData, error: invErr } = await supabaseClient.from('inventory').select('*');
+    const { data: invData } = await supabaseClient.from('inventory').select('*');
     const { data: histData } = await supabaseClient.from('history').select('*').order('id', { ascending: false });
     const { data: servData } = await supabaseClient.from('services').select('*');
 
@@ -121,6 +121,7 @@ function renderAllViews() {
   renderLocationPills();
   populateColumnFilterSelect();
   renderInventoryTable();
+  populateDosiLocationFilter();
   populateDosiDropdown();
   renderServicesCatalog();
   populateTrendSelect();
@@ -149,7 +150,7 @@ function updateMetrics() {
   if (gStores) gStores.innerText = locations;
 }
 
-// UBICACIONES Y FILTROS
+// INVENTARIO Y FILTROS POR UBICACIÓN
 function renderLocationPills() {
   const container = document.getElementById('category-pills');
   if (!container) return;
@@ -334,17 +335,53 @@ function confirmClearInventory() {
   }
 }
 
-// DOSIFICACIÓN
+// DOSIFICACIÓN: BÚSQUEDA Y FILTRADO RÁPIDO POR ÁREA Y PRODUCTO
+function populateDosiLocationFilter() {
+  const select = document.getElementById('dosi-filter-location');
+  if (!select) return;
+  
+  const locations = [...new Set(inventory.map(i => (i.detail || 'Almacen General').trim()))];
+  const currentVal = select.value;
+  
+  select.innerHTML = `<option value="TODOS">Todas las áreas...</option>` +
+    locations.map(l => `<option value="${l}">${l}</option>`).join('');
+    
+  if (currentVal) select.value = currentVal;
+}
+
 function populateDosiDropdown() {
   const select = document.getElementById('dosi-select-item');
   if (!select) return;
+
+  const locFilter = document.getElementById('dosi-filter-location') ? document.getElementById('dosi-filter-location').value : 'TODOS';
+  const searchTxt = document.getElementById('dosi-search-input') ? document.getElementById('dosi-search-input').value.toLowerCase().trim() : '';
+
   select.innerHTML = '';
-  inventory.forEach(item => {
-    const opt = document.createElement('option');
-    opt.value = item.name;
-    opt.innerText = `${item.name} (${item.detail || 'General'}) — Stock: ${item.stock} ${item.unit || 'Piezas'}`;
-    select.appendChild(opt);
+
+  const filteredItems = inventory.filter(item => {
+    const locValue = (item.detail || 'Almacen General').trim();
+    const matchLoc = locFilter === 'TODOS' || locValue.toUpperCase() === locFilter.toUpperCase();
+    
+    const itemName = (item.name || '').toLowerCase();
+    const matchSearch = itemName.includes(searchTxt);
+
+    return matchLoc && matchSearch;
   });
+
+  if (filteredItems.length === 0) {
+    const opt = document.createElement('option');
+    opt.value = "";
+    opt.innerText = "Sin coincidencias de productos...";
+    select.appendChild(opt);
+  } else {
+    filteredItems.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item.name;
+      opt.innerText = `${item.name} (${item.detail || 'General'}) — Stock: ${item.stock} ${item.unit || 'Piezas'}`;
+      select.appendChild(opt);
+    });
+  }
+
   updateDosiAvailableStock();
 }
 
