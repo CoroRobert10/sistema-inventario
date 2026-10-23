@@ -1,5 +1,5 @@
 // ==============================================================================
-// SHIFRA SPA - CÓDIGO COMPLETO INTEGRADOR SOLO POR UBICACIONES
+// SHIFRA SPA - CÓDIGO INTEGRADOR CORREGIDO (UBICACIONES Y LECTURA SEGURA)
 // ==============================================================================
 
 const SUPABASE_URL = 'https://uhkahspaqwcldvutzmnm.supabase.co';
@@ -28,28 +28,41 @@ window.addEventListener('DOMContentLoaded', () => {
 function openWelcomeScreen() { document.getElementById('welcome-screen').style.display = 'flex'; }
 function closeWelcomeScreen() { document.getElementById('welcome-screen').style.display = 'none'; }
 
-// CARGAR DATOS
+// CARGAR DATOS (LOCAL PRIMERO, LUEGO NUBE)
 async function loadDataFromSupabase() {
   try {
     const localInv = localStorage.getItem('shifra_spa_db');
     const localHist = localStorage.getItem('shifra_spa_history');
 
-    if (localInv) inventory = JSON.parse(localInv);
-    if (localHist) historyLogs = JSON.parse(localHist);
+    if (localInv) {
+      try { inventory = JSON.parse(localInv); } catch(e) { inventory = []; }
+    }
+    if (localHist) {
+      try { historyLogs = JSON.parse(localHist); } catch(e) { historyLogs = []; }
+    }
+    
     renderAllViews();
 
-    const { data: invData } = await supabaseClient.from('inventory').select('*');
+    const { data: invData, error: invErr } = await supabaseClient.from('inventory').select('*');
     const { data: histData } = await supabaseClient.from('history').select('*').order('id', { ascending: false });
     const { data: servData } = await supabaseClient.from('services').select('*');
 
     if (invData && invData.length > 0) {
-      inventory = invData;
+      inventory = invData.map(item => ({
+        ...item,
+        detail: item.detail || item.location || 'Almacen General',
+        cat: item.cat || 'GENERAL',
+        price: Number(item.price || 0),
+        stock: Number(item.stock || 0)
+      }));
       localStorage.setItem('shifra_spa_db', JSON.stringify(inventory));
     }
+
     if (histData && histData.length > 0) {
       historyLogs = histData;
       localStorage.setItem('shifra_spa_history', JSON.stringify(historyLogs));
     }
+
     if (servData && servData.length > 0) {
       servicesCatalog = servData.map(s => ({
         ...s,
@@ -60,6 +73,7 @@ async function loadDataFromSupabase() {
     renderAllViews();
   } catch (err) {
     console.error("Modo local activo:", err);
+    renderAllViews();
   }
 }
 
@@ -131,18 +145,19 @@ function updateMetrics() {
   if (gSkus) gSkus.innerText = skus;
   if (gStock) gStock.innerText = stock;
 
-  const locations = [...new Set(inventory.map(i => i.detail || 'General'))].length;
+  const locations = [...new Set(inventory.map(i => (i.detail || 'Almacen General').trim()))].length;
   if (gStores) gStores.innerText = locations;
 }
 
-// INVENTARIO Y FILTROS POR UBICACIÓN
+// UBICACIONES Y FILTROS
 function renderLocationPills() {
   const container = document.getElementById('category-pills');
   if (!container) return;
-  const locations = ['TODOS', ...new Set(inventory.map(i => i.detail || 'General'))];
+  
+  const locations = ['TODOS', ...new Set(inventory.map(i => (i.detail || 'Almacen General').trim()))];
 
   container.innerHTML = locations.map(loc => `
-    <button class="pill ${selectedLocationFilter === loc ? 'active' : ''}" onclick="filterByLocation('${loc}')">
+    <button class="pill ${selectedLocationFilter.toUpperCase() === loc.toUpperCase() ? 'active' : ''}" onclick="filterByLocation('${loc}')">
       ${loc === 'TODOS' ? 'TODAS las ubicaciones' : loc.toUpperCase()}
     </button>
   `).join('');
@@ -151,12 +166,12 @@ function renderLocationPills() {
 function populateColumnFilterSelect() {
   const select = document.getElementById('column-filter-select');
   if (!select) return;
-  const locations = [...new Set(inventory.map(i => i.detail || 'General'))];
+  const locations = [...new Set(inventory.map(i => (i.detail || 'Almacen General').trim()))];
   
   const currentVal = select.value;
   select.innerHTML = `<option value="TODOS">Filtrar por Ubicación...</option>` + 
     locations.map(l => `<option value="${l}">${l}</option>`).join('');
-  select.value = currentVal;
+  if (currentVal) select.value = currentVal;
 }
 
 function filterByLocation(loc) {
@@ -173,16 +188,18 @@ function renderInventoryTable() {
   tbody.innerHTML = '';
 
   const searchInput = document.getElementById('inv-search-input');
-  const search = searchInput ? searchInput.value.toLowerCase() : '';
+  const search = searchInput ? searchInput.value.toLowerCase().trim() : '';
   
   const colSelect = document.getElementById('column-filter-select');
   const columnFilter = colSelect ? colSelect.value : 'TODOS';
 
   let list = inventory.filter(i => {
-    const matchSearch = (i.name && i.name.toLowerCase().includes(search)) || 
-                        (i.detail && i.detail.toLowerCase().includes(search));
+    const itemName = (i.name || '').toLowerCase();
+    const itemDetail = (i.detail || 'Almacen General').toLowerCase();
     
-    const locValue = i.detail || 'General';
+    const matchSearch = itemName.includes(search) || itemDetail.includes(search);
+    
+    const locValue = (i.detail || 'Almacen General').trim();
     const matchLocation = (selectedLocationFilter === 'TODOS' || locValue.toUpperCase() === selectedLocationFilter.toUpperCase()) &&
                           (columnFilter === 'TODOS' || locValue.toUpperCase() === columnFilter.toUpperCase());
     
@@ -196,20 +213,21 @@ function renderInventoryTable() {
 
   list.forEach((item, index) => {
     const formattedPrice = Number(item.price || 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
+    const realIndex = inventory.indexOf(item);
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><strong>${item.name}</strong></td>
+      <td><strong>${item.name || 'Sin Nombre'}</strong></td>
       <td>${item.detail || 'Almacen General'}</td>
       <td>${item.unit || 'Piezas'}</td>
       <td><strong style="color: var(--gold-dark);">${formattedPrice}</strong></td>
-      <td><strong>${item.stock}</strong></td>
+      <td><strong>${item.stock || 0}</strong></td>
       <td>
         <div class="action-btn-group">
-          <button class="btn-icon" title="Traspasar" onclick="openTraspasoModalForItem(${index})"><i class="fa-solid fa-right-left"></i></button>
-          <button class="btn-icon" title="Aumentar" onclick="adjustStock(${index}, 1)"><i class="fa-solid fa-plus"></i></button>
-          <button class="btn-icon" title="Disminuir" onclick="adjustStock(${index}, -1)"><i class="fa-solid fa-minus"></i></button>
-          <button class="btn-icon delete" title="Borrar" onclick="deleteItem(${index})"><i class="fa-solid fa-trash"></i></button>
+          <button class="btn-icon" title="Traspasar" onclick="openTraspasoModalForItem(${realIndex})"><i class="fa-solid fa-right-left"></i></button>
+          <button class="btn-icon" title="Aumentar" onclick="adjustStock(${realIndex}, 1)"><i class="fa-solid fa-plus"></i></button>
+          <button class="btn-icon" title="Disminuir" onclick="adjustStock(${realIndex}, -1)"><i class="fa-solid fa-minus"></i></button>
+          <button class="btn-icon delete" title="Borrar" onclick="deleteItem(${realIndex})"><i class="fa-solid fa-trash"></i></button>
         </div>
       </td>
     `;
@@ -218,18 +236,20 @@ function renderInventoryTable() {
 }
 
 function adjustStock(index, delta) {
-  inventory[index].stock = Math.max(0, Number(inventory[index].stock) + delta);
-  saveAndSync();
+  if (inventory[index]) {
+    inventory[index].stock = Math.max(0, Number(inventory[index].stock || 0) + delta);
+    saveAndSync();
+  }
 }
 
 function deleteItem(index) {
-  if (confirm(`¿Eliminar "${inventory[index].name}"?`)) {
+  if (inventory[index] && confirm(`¿Eliminar "${inventory[index].name}"?`)) {
     inventory.splice(index, 1);
     saveAndSync();
   }
 }
 
-// IMPORTAR EXCEL (FUSIÓN INTELIGENTE POR UBICACIÓN)
+// IMPORTAR EXCEL CON FUSIÓN
 function importExcel(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -255,9 +275,11 @@ function importExcel(e) {
           const stock = Number(row['Stock'] || row['STOCK'] || row['Inventario'] || row['INVENTARIO'] || row['Cantidad'] || 0);
           const price = Number(row['Precio'] || row['PRECIO'] || row['price'] || 0);
 
+          if (!name || name === 'Sin Nombre') return;
+
           const existingIndex = inventory.findIndex(i => 
-            i.name && i.name.toLowerCase() === name.toLowerCase() && 
-            (i.detail || 'ALMACEN GENERAL').toUpperCase() === detail.toUpperCase()
+            i.name && i.name.toLowerCase().trim() === name.toLowerCase().trim() && 
+            (i.detail || 'Almacen General').toLowerCase().trim() === detail.toLowerCase().trim()
           );
 
           if (existingIndex !== -1) {
