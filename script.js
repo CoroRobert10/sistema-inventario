@@ -1,5 +1,5 @@
 // ==============================================================================
-// SHIFRA SPA - CÓDIGO COMPLETO ESTABILIZADO Y ROBUSTO
+// SHIFRA SPA - CÓDIGO COMPLETO ESTABILIZADO (SOLO FILTRO ÁREA Y LISTA)
 // ==============================================================================
 
 const SUPABASE_URL = 'https://uhkahspaqwcldvutzmnm.supabase.co';
@@ -335,12 +335,12 @@ function confirmClearInventory() {
   }
 }
 
-// DOSIFICACIÓN: BÚSQUEDA Y FILTRADO RÁPIDO POR ÁREA Y PRODUCTO
+// DOSIFICACIÓN: FILTRADO RÁPIDO EXCLUSIVAMENTE POR ÁREA
 function populateDosiLocationFilter() {
   const select = document.getElementById('dosi-filter-location');
   if (!select) return;
   
-  const locations = [...new Set(inventory.map(i => (i.detail || 'Almacen General').trim()))];
+  const locations = [...new Set(inventory.map(i => (i.detail || i.location || 'Almacen General').toString().trim()))];
   const currentVal = select.value;
   
   select.innerHTML = `<option value="TODOS">Todas las áreas...</option>` +
@@ -354,30 +354,28 @@ function populateDosiDropdown() {
   if (!select) return;
 
   const locFilter = document.getElementById('dosi-filter-location') ? document.getElementById('dosi-filter-location').value : 'TODOS';
-  const searchTxt = document.getElementById('dosi-search-input') ? document.getElementById('dosi-search-input').value.toLowerCase().trim() : '';
 
   select.innerHTML = '';
 
   const filteredItems = inventory.filter(item => {
-    const locValue = (item.detail || 'Almacen General').trim();
-    const matchLoc = locFilter === 'TODOS' || locValue.toUpperCase() === locFilter.toUpperCase();
-    
-    const itemName = (item.name || '').toLowerCase();
-    const matchSearch = itemName.includes(searchTxt);
-
-    return matchLoc && matchSearch;
+    const locValue = (item.detail || item.location || 'Almacen General').toString().trim();
+    return locFilter === 'TODOS' || locValue.toUpperCase() === locFilter.toUpperCase();
   });
 
   if (filteredItems.length === 0) {
     const opt = document.createElement('option');
     opt.value = "";
-    opt.innerText = "Sin coincidencias de productos...";
+    opt.innerText = "Sin productos registrados en esta área...";
     select.appendChild(opt);
   } else {
     filteredItems.forEach(item => {
       const opt = document.createElement('option');
       opt.value = item.name;
-      opt.innerText = `${item.name} (${item.detail || 'General'}) — Stock: ${item.stock} ${item.unit || 'Piezas'}`;
+      const stockVal = item.stock !== undefined ? item.stock : (item.cantidad || 0);
+      const unitVal = item.unit || item.unidad || 'Piezas';
+      const detailVal = item.detail || item.location || 'General';
+      
+      opt.innerText = `${item.name} (${detailVal}) — Stock: ${stockVal} ${unitVal}`;
       select.appendChild(opt);
     });
   }
@@ -392,7 +390,9 @@ function updateDosiAvailableStock() {
   const item = inventory.find(i => i.name === name);
   const label = document.getElementById('dosi-stock-label');
   if (label) {
-    label.innerText = item ? `${item.stock} ${item.unit || 'Piezas'}` : '0 Piezas';
+    const stockVal = item ? (item.stock !== undefined ? item.stock : (item.cantidad || 0)) : 0;
+    const unitVal = item ? (item.unit || item.unidad || 'Piezas') : 'Piezas';
+    label.innerText = `${stockVal} ${unitVal}`;
   }
 }
 
