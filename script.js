@@ -201,7 +201,7 @@ function deleteItem(index) {
   }
 }
 
-// IMPORTAR EXCEL (CON SOPORTE DE PRECIOS Y ENCABEZADOS FLEXIBLES)
+// IMPORTAR EXCEL (FUSIÓN INTELIGENTE POR CATEGORÍA SIN BORRAR LAS DEMÁS)
 function importExcel(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -216,19 +216,36 @@ function importExcel(e) {
       const json = XLSX.utils.sheet_to_json(worksheet);
 
       if (json && json.length > 0) {
-        inventory = json.map(row => {
-          const cat = row['Categoría'] || row['CATEGORIA'] || row['Cat'] || 'ALMACEN';
-          const name = row['Artículo'] || row['ARTICULO'] || row['Nombre'] || row['Item'] || 'Sin Nombre';
-          const detail = row['Detalle'] || row['DETALLE'] || row['Ubicación'] || row['UBICACIÓN'] || row['Presentación'] || '';
-          const unit = row['Unidad'] || row['UNIDAD'] || row['Medida'] || row['MEDIDA'] || 'Piezas';
+        let addedCount = 0;
+        let updatedCount = 0;
+
+        json.forEach(row => {
+          const cat = String(row['Categoría'] || row['CATEGORIA'] || row['Cat'] || firstSheetName).trim().toUpperCase();
+          const name = String(row['Artículo'] || row['ARTICULO'] || row['Nombre'] || row['Item'] || 'Sin Nombre').trim();
+          const detail = String(row['Detalle'] || row['DETALLE'] || row['Ubicación'] || row['UBICACIÓN'] || row['Presentación'] || '').trim();
+          const unit = String(row['Unidad'] || row['UNIDAD'] || row['Medida'] || row['MEDIDA'] || 'Piezas').trim();
           const stock = Number(row['Stock'] || row['STOCK'] || row['Inventario'] || row['INVENTARIO'] || row['Cantidad'] || 0);
           const price = Number(row['Precio'] || row['PRECIO'] || row['price'] || 0);
 
-          return { cat, name, detail, unit, stock, price };
+          const existingIndex = inventory.findIndex(i => 
+            i.name.toLowerCase() === name.toLowerCase() && 
+            (i.cat || 'GENERAL').toUpperCase() === cat
+          );
+
+          if (existingIndex !== -1) {
+            inventory[existingIndex].stock = stock;
+            inventory[existingIndex].price = price > 0 ? price : inventory[existingIndex].price;
+            inventory[existingIndex].detail = detail || inventory[existingIndex].detail;
+            inventory[existingIndex].unit = unit || inventory[existingIndex].unit;
+            updatedCount++;
+          } else {
+            inventory.push({ cat, name, detail, unit, stock, price });
+            addedCount++;
+          }
         });
 
         saveAndSync();
-        showToast(`Se cargaron ${inventory.length} artículos con éxito.`);
+        showToast(`Importación exitosa: ${addedCount} nuevos, ${updatedCount} actualizados.`);
       } else {
         alert('El archivo Excel no contiene datos válidos.');
       }
