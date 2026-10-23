@@ -1,5 +1,5 @@
 // ==============================================================================
-// SHIFRA SPA - CÓDIGO COMPLETO INTEGRADOR CON SUPABASE
+// SHIFRA SPA - CÓDIGO COMPLETO INTEGRADOR CON SUPABASE Y PRECIOS
 // ==============================================================================
 
 const SUPABASE_URL = 'https://uhkahspaqwcldvutzmnm.supabase.co';
@@ -122,6 +122,7 @@ function updateMetrics() {
 // INVENTARIO
 function renderCategoryPills() {
   const container = document.getElementById('category-pills');
+  if (!container) return;
   const stores = ['TODOS', ...new Set(inventory.map(i => i.cat || 'General'))];
 
   container.innerHTML = stores.map(store => `
@@ -144,9 +145,11 @@ function toggleLowStockFilter() {
 
 function renderInventoryTable() {
   const tbody = document.getElementById('inventory-table-body');
+  if (!tbody) return;
   tbody.innerHTML = '';
 
-  const search = document.getElementById('inv-search-input').value.toLowerCase();
+  const searchInput = document.getElementById('inv-search-input');
+  const search = searchInput ? searchInput.value.toLowerCase() : '';
 
   let list = inventory.filter(i => {
     const matchSearch = i.name.toLowerCase().includes(search) || (i.cat && i.cat.toLowerCase().includes(search));
@@ -156,18 +159,21 @@ function renderInventoryTable() {
   });
 
   if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#888;">No hay artículos registrados.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#888;">No hay artículos registrados.</td></tr>`;
     return;
   }
 
   list.forEach((item, index) => {
     const isLow = Number(item.stock) <= 3;
+    const formattedPrice = Number(item.price || 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><span class="badge-tag">${(item.cat || 'General').toUpperCase()}</span></td>
       <td><strong>${item.name}</strong></td>
       <td>${item.detail || 'Almacen General'}</td>
       <td>${item.unit || 'Piezas'}</td>
+      <td><strong style="color: var(--gold-dark);">${formattedPrice}</strong></td>
       <td><strong>${item.stock}</strong></td>
       <td><span class="badge-status ${isLow ? 'low' : ''}">${isLow ? 'Stock Bajo' : 'Normal'}</span></td>
       <td>
@@ -195,9 +201,77 @@ function deleteItem(index) {
   }
 }
 
+// IMPORTAR EXCEL (CON SOPORTE DE PRECIOS Y ENCABEZADOS FLEXIBLES)
+function importExcel(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    try {
+      const data = new Uint8Array(evt.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      const json = XLSX.utils.sheet_to_json(worksheet);
+
+      if (json && json.length > 0) {
+        inventory = json.map(row => {
+          const cat = row['Categoría'] || row['CATEGORIA'] || row['Cat'] || 'ALMACEN';
+          const name = row['Artículo'] || row['ARTICULO'] || row['Nombre'] || row['Item'] || 'Sin Nombre';
+          const detail = row['Detalle'] || row['DETALLE'] || row['Ubicación'] || row['UBICACIÓN'] || row['Presentación'] || '';
+          const unit = row['Unidad'] || row['UNIDAD'] || row['Medida'] || row['MEDIDA'] || 'Piezas';
+          const stock = Number(row['Stock'] || row['STOCK'] || row['Inventario'] || row['INVENTARIO'] || row['Cantidad'] || 0);
+          const price = Number(row['Precio'] || row['PRECIO'] || row['price'] || 0);
+
+          return { cat, name, detail, unit, stock, price };
+        });
+
+        saveAndSync();
+        showToast(`Se cargaron ${inventory.length} artículos con éxito.`);
+      } else {
+        alert('El archivo Excel no contiene datos válidos.');
+      }
+    } catch (err) {
+      console.error("Error leyendo archivo Excel:", err);
+      alert('Ocurrió un error al procesar el archivo Excel.');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// RESPALDAR JSON
+function exportBackupJSON() {
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(inventory, null, 2));
+  const dlAnchor = document.createElement('a');
+  dlAnchor.setAttribute("href", dataStr);
+  dlAnchor.setAttribute("download", `respaldo_shifra_spa_${new Date().toISOString().slice(0,10)}.json`);
+  document.body.appendChild(dlAnchor);
+  dlAnchor.click();
+  dlAnchor.remove();
+}
+
+// EXPORTAR A EXCEL
+function exportToExcel() {
+  const ws = XLSX.utils.json_to_sheet(inventory);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Inventario");
+  XLSX.writeFile(wb, `Inventario_Shifra_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+// VACIAR INVENTARIO
+function confirmClearInventory() {
+  if (confirm("¿Estás seguro de que deseas borrar toda la base de datos de inventario?")) {
+    inventory = [];
+    saveAndSync();
+    showToast("Base de datos vaciada.");
+  }
+}
+
 // DOSIFICACIÓN
 function populateDosiDropdown() {
   const select = document.getElementById('dosi-select-item');
+  if (!select) return;
   select.innerHTML = '';
   inventory.forEach(item => {
     const opt = document.createElement('option');
@@ -209,9 +283,14 @@ function populateDosiDropdown() {
 }
 
 function updateDosiAvailableStock() {
-  const name = document.getElementById('dosi-select-item').value;
+  const select = document.getElementById('dosi-select-item');
+  if (!select) return;
+  const name = select.value;
   const item = inventory.find(i => i.name === name);
-  document.getElementById('dosi-stock-label').innerText = item ? `${item.stock} ${item.unit || 'Piezas'}` : '0 Piezas';
+  const label = document.getElementById('dosi-stock-label');
+  if (label) {
+    label.innerText = item ? `${item.stock} ${item.unit || 'Piezas'}` : '0 Piezas';
+  }
 }
 
 function addDosiToList() {
@@ -227,6 +306,7 @@ function addDosiToList() {
 
 function renderDosiPendingList() {
   const tbody = document.getElementById('dosi-pending-list');
+  if (!tbody) return;
   tbody.innerHTML = '';
 
   dosiPendingList.forEach((item, index) => {
@@ -276,6 +356,7 @@ function confirmDosiBatch() {
 // TENDENCIAS
 function populateTrendSelect() {
   const select = document.getElementById('trend-item-select');
+  if (!select) return;
   select.innerHTML = '';
   inventory.forEach(i => {
     const opt = document.createElement('option');
@@ -286,13 +367,15 @@ function populateTrendSelect() {
 }
 
 function loadItemTrendDetails() {
-  const name = document.getElementById('trend-item-select').value;
+  const select = document.getElementById('trend-item-select');
+  if (!select) return;
+  const name = select.value;
   const logs = historyLogs.filter(h => h.item === name && h.type === 'Dosificación');
 
   const tbody = document.getElementById('trend-history-tbody');
+  if (!tbody) return;
   tbody.innerHTML = '';
 
-  let totalOut = 0;
   logs.forEach(l => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -304,7 +387,27 @@ function loadItemTrendDetails() {
     tbody.appendChild(tr);
   });
 
-  document.getElementById('trend-total-val').innerText = `${logs.length * 2} Piezas`;
+  const totalVal = document.getElementById('trend-total-val');
+  if (totalVal) {
+    totalVal.innerText = `${logs.length * 2} Piezas`;
+  }
+}
+
+// SERVICIOS
+function renderServicesCatalog() {
+  const tbody = document.getElementById('services-catalog-list');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  servicesCatalog.forEach(s => {
+    const recipeText = s.recipe.map(r => `${r.name}: ${r.qty} ${r.unit}`).join(', ');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${s.name}</strong></td>
+      <td>${recipeText}</td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
 // GRÁFICOS
@@ -316,23 +419,27 @@ function renderCharts() {
   if (chartSkusInstance) chartSkusInstance.destroy();
   if (chartVolumeInstance) chartVolumeInstance.destroy();
 
-  const ctxSkus = document.getElementById('chart-skus').getContext('2d');
-  chartSkusInstance = new Chart(ctxSkus, {
-    type: 'doughnut',
-    data: {
-      labels: stores,
-      datasets: [{ data: skuCounts, backgroundColor: ['#a88d55', '#333333', '#3498db', '#e74c3c'] }]
-    }
-  });
+  const ctxSkus = document.getElementById('chart-skus');
+  if (ctxSkus) {
+    chartSkusInstance = new Chart(ctxSkus.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: stores,
+        datasets: [{ data: skuCounts, backgroundColor: ['#a88d55', '#333333', '#3498db', '#e74c3c'] }]
+      }
+    });
+  }
 
-  const ctxVol = document.getElementById('chart-volume').getContext('2d');
-  chartVolumeInstance = new Chart(ctxVol, {
-    type: 'bar',
-    data: {
-      labels: stores,
-      datasets: [{ label: 'Piezas Total', data: volumeCounts, backgroundColor: '#bda26b' }]
-    }
-  });
+  const ctxVol = document.getElementById('chart-volume');
+  if (ctxVol) {
+    chartVolumeInstance = new Chart(ctxVol.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: stores,
+        datasets: [{ label: 'Piezas Total', data: volumeCounts, backgroundColor: '#bda26b' }]
+      }
+    });
+  }
 }
 
 // MODALES
@@ -347,6 +454,7 @@ function closeHistorialModal() { document.getElementById('modal-historial').styl
 
 function renderHistorialModalTable() {
   const tbody = document.getElementById('historial-modal-tbody');
+  if (!tbody) return;
   tbody.innerHTML = '';
 
   historyLogs.forEach(h => {
@@ -361,6 +469,14 @@ function renderHistorialModalTable() {
   });
 }
 
+function clearFullHistory() {
+  if (confirm("¿Borrar todo el historial de movimientos?")) {
+    historyLogs = [];
+    saveAndSync();
+    renderHistorialModalTable();
+  }
+}
+
 function openAddModal() { document.getElementById('modal-add-item').style.display = 'flex'; }
 function closeAddModal() { document.getElementById('modal-add-item').style.display = 'none'; }
 
@@ -370,16 +486,18 @@ function saveNewItem() {
   const detail = document.getElementById('add-item-location').value.trim() || 'Almacen General';
   const unit = document.getElementById('add-item-unit').value.trim() || 'Piezas';
   const stock = Number(document.getElementById('add-item-stock').value) || 0;
+  const price = Number(document.getElementById('add-item-price').value) || 0;
 
   if (!name) return alert('Escribe el nombre del artículo.');
 
-  inventory.push({ cat, name, detail, unit, stock });
+  inventory.push({ cat, name, detail, unit, stock, price });
   saveAndSync();
   closeAddModal();
 }
 
 function showToast(msg) {
   const t = document.getElementById('toast');
+  if (!t) return;
   t.innerText = msg;
   t.style.display = 'block';
   setTimeout(() => t.style.display = 'none', 3000);
