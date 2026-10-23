@@ -1,5 +1,5 @@
 // ==============================================================================
-// SHIFRA SPA - CÓDIGO COMPLETO INTEGRADOR CON SUPABASE Y PRECIOS
+// SHIFRA SPA - CÓDIGO COMPLETO INTEGRADOR CON SUPABASE Y PRECIOS SEGUROS
 // ==============================================================================
 
 const SUPABASE_URL = 'https://uhkahspaqwcldvutzmnm.supabase.co';
@@ -29,15 +29,30 @@ window.addEventListener('DOMContentLoaded', () => {
 function openWelcomeScreen() { document.getElementById('welcome-screen').style.display = 'flex'; }
 function closeWelcomeScreen() { document.getElementById('welcome-screen').style.display = 'none'; }
 
-// CARGAR DATOS SUPABASE
+// CARGAR DATOS (CON PRIORIDAD LOCAL SEGURA)
 async function loadDataFromSupabase() {
   try {
+    // 1. Cargar de inmediato desde memoria local para que nunca aparezca vacío
+    const localInv = localStorage.getItem('shifra_spa_db');
+    const localHist = localStorage.getItem('shifra_spa_history');
+
+    if (localInv) inventory = JSON.parse(localInv);
+    if (localHist) historyLogs = JSON.parse(localHist);
+    renderAllViews();
+
+    // 2. Sincronizar con Supabase en segundo plano
     const { data: invData } = await supabaseClient.from('inventory').select('*');
     const { data: histData } = await supabaseClient.from('history').select('*').order('id', { ascending: false });
     const { data: servData } = await supabaseClient.from('services').select('*');
 
-    if (invData && invData.length > 0) inventory = invData;
-    if (histData && histData.length > 0) historyLogs = histData;
+    if (invData && invData.length > 0) {
+      inventory = invData;
+      localStorage.setItem('shifra_spa_db', JSON.stringify(inventory));
+    }
+    if (histData && histData.length > 0) {
+      historyLogs = histData;
+      localStorage.setItem('shifra_spa_history', JSON.stringify(historyLogs));
+    }
     if (servData && servData.length > 0) {
       servicesCatalog = servData.map(s => ({
         ...s,
@@ -46,33 +61,36 @@ async function loadDataFromSupabase() {
     }
 
     renderAllViews();
-    showToast('Sincronizado con Supabase');
   } catch (err) {
-    console.error("Error al cargar de Supabase:", err);
+    console.error("Modo local activo:", err);
   }
 }
 
-// GUARDAR Y SINCRONIZAR
+// GUARDAR Y SINCRONIZAR SEGURO
 async function saveAndSync() {
+  // Guardar localmente primero
   localStorage.setItem('shifra_spa_db', JSON.stringify(inventory));
   localStorage.setItem('shifra_spa_history', JSON.stringify(historyLogs));
-
   renderAllViews();
 
   try {
-    await supabaseClient.from('inventory').delete().neq('id', 0);
+    // Sincronización segura con Supabase
+    await supabaseClient.from('inventory').delete().not('id', 'is', null);
     if (inventory.length > 0) {
       const cleanInv = inventory.map(({ id, ...rest }) => rest);
-      await supabaseClient.from('inventory').insert(cleanInv);
+      const { error } = await supabaseClient.from('inventory').insert(cleanInv);
+      if (error) console.error("Error al insertar en Supabase:", error);
     }
 
-    await supabaseClient.from('history').delete().neq('id', 0);
+    await supabaseClient.from('history').delete().not('id', 'is', null);
     if (historyLogs.length > 0) {
       const cleanHist = historyLogs.map(({ id, ...rest }) => rest);
       await supabaseClient.from('history').insert(cleanHist);
     }
+    showToast('Sincronizado en la nube con éxito.');
   } catch (e) {
-    console.error("Error de guardado en la nube:", e);
+    console.error("Aviso de sincronización:", e);
+    showToast('Guardado localmente (Revisa conexión a nube)');
   }
 }
 
@@ -152,7 +170,7 @@ function renderInventoryTable() {
   const search = searchInput ? searchInput.value.toLowerCase() : '';
 
   let list = inventory.filter(i => {
-    const matchSearch = i.name.toLowerCase().includes(search) || (i.cat && i.cat.toLowerCase().includes(search));
+    const matchSearch = (i.name && i.name.toLowerCase().includes(search)) || (i.cat && i.cat.toLowerCase().includes(search));
     const matchStore = selectedStoreFilter === 'TODOS' || (i.cat || 'General').toUpperCase() === selectedStoreFilter.toUpperCase();
     const matchLow = hideLowStockFlag ? Number(i.stock) <= 3 : true;
     return matchSearch && matchStore && matchLow;
@@ -201,7 +219,7 @@ function deleteItem(index) {
   }
 }
 
-// IMPORTAR EXCEL (FUSIÓN INTELIGENTE POR CATEGORÍA SIN BORRAR LAS DEMÁS)
+// IMPORTAR EXCEL (FUSIÓN INTELIGENTE POR CATEGORÍA)
 function importExcel(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -220,15 +238,15 @@ function importExcel(e) {
         let updatedCount = 0;
 
         json.forEach(row => {
-          const cat = String(row['Categoría'] || row['CATEGORIA'] || row['Cat'] || firstSheetName).trim().toUpperCase();
-          const name = String(row['Artículo'] || row['ARTICULO'] || row['Nombre'] || row['Item'] || 'Sin Nombre').trim();
-          const detail = String(row['Detalle'] || row['DETALLE'] || row['Ubicación'] || row['UBICACIÓN'] || row['Presentación'] || '').trim();
+          const cat = String(row['Categoría'] || row['CATEGORIA'] || row['CATEGORÍA'] || row['Cat'] || firstSheetName).trim().toUpperCase();
+          const name = String(row['Artículo'] || row['ARTICULO'] || row['ARTÍCULO'] || row['Nombre'] || row['Item'] || 'Sin Nombre').trim();
+          const detail = String(row['Detalle'] || row['DETALLE'] || row['Ubicación'] || row['UBICACIÓN'] || row['Ubicacion'] || row['UBICACION'] || row['Presentación'] || '').trim();
           const unit = String(row['Unidad'] || row['UNIDAD'] || row['Medida'] || row['MEDIDA'] || 'Piezas').trim();
           const stock = Number(row['Stock'] || row['STOCK'] || row['Inventario'] || row['INVENTARIO'] || row['Cantidad'] || 0);
           const price = Number(row['Precio'] || row['PRECIO'] || row['price'] || 0);
 
           const existingIndex = inventory.findIndex(i => 
-            i.name.toLowerCase() === name.toLowerCase() && 
+            i.name && i.name.toLowerCase() === name.toLowerCase() && 
             (i.cat || 'GENERAL').toUpperCase() === cat
           );
 
