@@ -1,5 +1,5 @@
 // ==============================================================================
-// SHIFRA SPA - CÓDIGO COMPLETO (INCLUYE GESTIÓN DE SERVICIOS Y RECETAS)
+// SHIFRA SPA - CÓDIGO COMPLETO ESTABILIZADO Y FUNCIONAL
 // ==============================================================================
 
 const SUPABASE_URL = 'https://uhkahspaqwcldvutzmnm.supabase.co';
@@ -593,7 +593,6 @@ function addRecipeItem() {
   const itemObj = inventory.find(i => i.name === itemName);
   const unit = itemObj ? (itemObj.unit || 'Piezas') : 'Piezas';
 
-  // Verificar si ya está en la receta temporal para actualizarlo
   const existing = currentRecipeTemp.find(r => r.name.toLowerCase() === itemName.toLowerCase());
   if (existing) {
     existing.qty = qty;
@@ -669,8 +668,6 @@ function applyServiceToStock() {
   const dateStr = now.toLocaleDateString('es-MX');
   const timeStr = now.toLocaleTimeString('es-MX');
 
-  let errorOccurred = false;
-
   service.recipe.forEach(r => {
     const totalDeduction = r.qty * count;
     const item = inventory.find(i => i.name.toLowerCase() === r.name.toLowerCase());
@@ -684,8 +681,6 @@ function applyServiceToStock() {
         item: item.name,
         detail: `Aplicación de ${count}x "${service.name}": -${totalDeduction} ${r.unit} (${item.detail || 'General'})`
       });
-    } else {
-      errorOccurred = true;
     }
   });
 
@@ -735,34 +730,6 @@ function loadItemTrendDetails() {
     }, 0);
     totalVal.innerText = `${totalQty} Piezas`;
   }
-}
-
-// SERVICIOS (CATÁLOGO RENDER)
-function renderServicesCatalog() {
-  const tbody = document.getElementById('services-catalog-list');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-
-  if (servicesCatalog.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#888;">No hay servicios registrados.</td></tr>`;
-    return;
-  }
-
-  servicesCatalog.forEach((s, index) => {
-    const recipeText = s.recipe.map(r => `${r.name}: ${r.qty} ${r.unit}`).join(', ');
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><strong>${s.name}</strong></td>
-      <td>${recipeText}</td>
-      <td>
-        <div class="action-btn-group">
-          <button class="btn-icon" title="Editar" onclick="openServiceModal(${index})"><i class="fa-solid fa-pen"></i></button>
-          <button class="btn-icon delete" title="Borrar" onclick="deleteService(${index})"><i class="fa-solid fa-trash"></i></button>
-        </div>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
 }
 
 // GRÁFICOS
