@@ -541,7 +541,7 @@ function renderServicesCatalog() {
   });
 }
 
-function openServiceModal(index = -1) {
+function openServiceModal(index) {
   const modal = document.getElementById('modal-service');
   const title = document.getElementById('modal-service-title');
   const nameInput = document.getElementById('service-name-input');
@@ -549,13 +549,14 @@ function openServiceModal(index = -1) {
   
   if (!modal) return;
 
-  editIndexInput.value = index;
+  const idx = (index !== undefined && index !== null && !isNaN(index)) ? Number(index) : -1;
+  editIndexInput.value = idx;
   currentRecipeTemp = [];
 
-  if (index >= 0 && servicesCatalog[index]) {
+  if (idx >= 0 && servicesCatalog[idx]) {
     title.innerHTML = `<i class="fa-solid fa-pen"></i> Editar Servicio`;
-    nameInput.value = servicesCatalog[index].name;
-    currentRecipeTemp = JSON.parse(JSON.stringify(servicesCatalog[index].recipe));
+    nameInput.value = servicesCatalog[idx].name;
+    currentRecipeTemp = JSON.parse(JSON.stringify(servicesCatalog[idx].recipe));
   } else {
     title.innerHTML = `<i class="fa-solid fa-hand-holding-heart"></i> Nuevo Servicio / Tratamiento`;
     nameInput.value = '';
