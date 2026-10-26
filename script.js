@@ -1,5 +1,5 @@
 // ==============================================================================
-// SHIFRA SPA - CÓDIGO COMPLETO ESTABILIZADO (SOLO FILTRO ÁREA Y LISTA)
+// SHIFRA SPA - CÓDIGO COMPLETO (INCLUYE GESTIÓN DE SERVICIOS Y RECETAS)
 // ==============================================================================
 
 const SUPABASE_URL = 'https://uhkahspaqwcldvutzmnm.supabase.co';
@@ -15,6 +15,7 @@ let servicesCatalog = [
   { name: 'SUE 50', recipe: [{ name: 'Aceite para Masajes', qty: 30, unit: 'ml' }] },
   { name: 'HOL 80', recipe: [{ name: 'Aceite para Masajes', qty: 50, unit: 'ml' }] }
 ];
+let currentRecipeTemp = [];
 
 let selectedLocationFilter = 'TODOS';
 let chartSkusInstance = null;
@@ -33,13 +34,11 @@ async function loadDataFromSupabase() {
   try {
     const localInv = localStorage.getItem('shifra_spa_db');
     const localHist = localStorage.getItem('shifra_spa_history');
+    const localServ = localStorage.getItem('shifra_spa_services');
 
-    if (localInv) {
-      try { inventory = JSON.parse(localInv); } catch(e) { inventory = []; }
-    }
-    if (localHist) {
-      try { historyLogs = JSON.parse(localHist); } catch(e) { historyLogs = []; }
-    }
+    if (localInv) { try { inventory = JSON.parse(localInv); } catch(e) { inventory = []; } }
+    if (localHist) { try { historyLogs = JSON.parse(localHist); } catch(e) { historyLogs = []; } }
+    if (localServ) { try { servicesCatalog = JSON.parse(localServ); } catch(e) {} }
     
     renderAllViews();
 
@@ -68,6 +67,7 @@ async function loadDataFromSupabase() {
         ...s,
         recipe: typeof s.recipe === 'string' ? JSON.parse(s.recipe) : s.recipe
       }));
+      localStorage.setItem('shifra_spa_services', JSON.stringify(servicesCatalog));
     }
 
     renderAllViews();
@@ -81,6 +81,7 @@ async function loadDataFromSupabase() {
 async function saveAndSync() {
   localStorage.setItem('shifra_spa_db', JSON.stringify(inventory));
   localStorage.setItem('shifra_spa_history', JSON.stringify(historyLogs));
+  localStorage.setItem('shifra_spa_services', JSON.stringify(servicesCatalog));
   renderAllViews();
 
   try {
@@ -95,6 +96,16 @@ async function saveAndSync() {
       const cleanHist = historyLogs.map(({ id, ...rest }) => rest);
       await supabaseClient.from('history').insert(cleanHist);
     }
+
+    await supabaseClient.from('services').delete().not('id', 'is', null);
+    if (servicesCatalog.length > 0) {
+      const cleanServ = servicesCatalog.map(({ id, ...rest }) => ({
+        name: rest.name,
+        recipe: typeof rest.recipe === 'string' ? rest.recipe : JSON.stringify(rest.recipe)
+      }));
+      await supabaseClient.from('services').insert(cleanServ);
+    }
+
     showToast('Sincronizado en la nube con éxito.');
   } catch (e) {
     console.error("Aviso de sincronización:", e);
@@ -124,6 +135,7 @@ function renderAllViews() {
   populateDosiLocationFilter();
   populateDosiDropdown();
   renderServicesCatalog();
+  populateServiceSelect();
   populateTrendSelect();
 }
 
@@ -335,7 +347,7 @@ function confirmClearInventory() {
   }
 }
 
-// DOSIFICACIÓN: FILTRADO RÁPIDO EXCLUSIVAMENTE POR ÁREA
+// DOSIFICACIÓN: FILTRADO RÁPIDO POR ÁREA
 function populateDosiLocationFilter() {
   const select = document.getElementById('dosi-filter-location');
   if (!select) return;
@@ -459,6 +471,228 @@ function confirmDosiBatch() {
   showToast('Dosificación descontada con éxito.');
 }
 
+// ==============================================================================
+// GESTIÓN DE SERVICIOS Y RECETAS (CREAR, EDITAR, ELIMINAR Y APLICAR)
+// ==============================================================================
+
+function populateServiceSelect() {
+  const select = document.getElementById('service-select');
+  if (!select) return;
+  select.innerHTML = '';
+  
+  if (servicesCatalog.length === 0) {
+    select.innerHTML = `<option value="">No hay servicios configurados</option>`;
+    return;
+  }
+
+  servicesCatalog.forEach((s, idx) => {
+    const opt = document.createElement('option');
+    opt.value = idx;
+    opt.innerText = s.name;
+    select.appendChild(opt);
+  });
+  previewServiceRecipe();
+}
+
+function previewServiceRecipe() {
+  const select = document.getElementById('service-select');
+  const previewBox = document.getElementById('recipe-preview-list');
+  if (!select || !previewBox) return;
+
+  const idx = select.value;
+  if (idx === "" || !servicesCatalog[idx]) {
+    previewBox.innerHTML = "Selecciona un servicio...";
+    return;
+  }
+
+  const service = servicesCatalog[idx];
+  const count = Number(document.getElementById('service-count-input').value) || 1;
+
+  previewBox.innerHTML = service.recipe.map(r => {
+    const totalQty = r.qty * count;
+    return `• <strong>${r.name}</strong>: ${totalQty} ${r.unit}`;
+  }).join('<br>');
+}
+
+function renderServicesCatalog() {
+  const tbody = document.getElementById('services-catalog-list');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  if (servicesCatalog.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#888;">No hay servicios registrados.</td></tr>`;
+    return;
+  }
+
+  servicesCatalog.forEach((s, index) => {
+    const recipeText = s.recipe.map(r => `${r.name}: ${r.qty} ${r.unit}`).join(', ');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${s.name}</strong></td>
+      <td>${recipeText}</td>
+      <td>
+        <div class="action-btn-group">
+          <button class="btn-icon" title="Editar" onclick="openServiceModal(${index})"><i class="fa-solid fa-pen"></i></button>
+          <button class="btn-icon delete" title="Borrar" onclick="deleteService(${index})"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function openServiceModal(index = -1) {
+  const modal = document.getElementById('modal-service');
+  const title = document.getElementById('modal-service-title');
+  const nameInput = document.getElementById('service-name-input');
+  const editIndexInput = document.getElementById('service-edit-index');
+  
+  if (!modal) return;
+
+  editIndexInput.value = index;
+  currentRecipeTemp = [];
+
+  if (index >= 0 && servicesCatalog[index]) {
+    title.innerHTML = `<i class="fa-solid fa-pen"></i> Editar Servicio`;
+    nameInput.value = servicesCatalog[index].name;
+    currentRecipeTemp = JSON.parse(JSON.stringify(servicesCatalog[index].recipe));
+  } else {
+    title.innerHTML = `<i class="fa-solid fa-hand-holding-heart"></i> Nuevo Servicio / Tratamiento`;
+    nameInput.value = '';
+  }
+
+  populateRecipeItemSelect();
+  renderRecipeItemsTable();
+  modal.style.display = 'flex';
+}
+
+function closeServiceModal() {
+  document.getElementById('modal-service').style.display = 'none';
+}
+
+function populateRecipeItemSelect() {
+  const select = document.getElementById('service-item-select');
+  if (!select) return;
+  select.innerHTML = '';
+
+  inventory.forEach(i => {
+    const opt = document.createElement('option');
+    opt.value = i.name;
+    opt.innerText = `${i.name} (${i.detail || 'General'})`;
+    select.appendChild(opt);
+  });
+}
+
+function addRecipeItem() {
+  const select = document.getElementById('service-item-select');
+  const qtyInput = document.getElementById('service-item-qty');
+  if (!select || !select.value) return;
+
+  const itemName = select.value;
+  const qty = Number(qtyInput.value) || 1;
+  const itemObj = inventory.find(i => i.name === itemName);
+  const unit = itemObj ? (itemObj.unit || 'Piezas') : 'Piezas';
+
+  // Verificar si ya está en la receta temporal para actualizarlo
+  const existing = currentRecipeTemp.find(r => r.name.toLowerCase() === itemName.toLowerCase());
+  if (existing) {
+    existing.qty = qty;
+  } else {
+    currentRecipeTemp.push({ name: itemName, qty, unit });
+  }
+
+  renderRecipeItemsTable();
+}
+
+function renderRecipeItemsTable() {
+  const tbody = document.getElementById('recipe-items-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  if (currentRecipeTemp.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#888;">No hay insumos agregados a la receta.</td></tr>`;
+    return;
+  }
+
+  currentRecipeTemp.forEach((r, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${r.name}</strong></td>
+      <td>${r.qty}</td>
+      <td>${r.unit}</td>
+      <td><button class="btn-icon delete" onclick="removeRecipeItem(${idx})"><i class="fa-solid fa-xmark"></i></button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function removeRecipeItem(idx) {
+  currentRecipeTemp.splice(idx, 1);
+  renderRecipeItemsTable();
+}
+
+function saveServiceConfig() {
+  const name = document.getElementById('service-name-input').value.trim();
+  const editIndex = Number(document.getElementById('service-edit-index').value);
+
+  if (!name) return alert('Escribe el nombre del servicio.');
+  if (currentRecipeTemp.length === 0) return alert('Agrega al menos un insumo a la receta del servicio.');
+
+  if (editIndex >= 0 && servicesCatalog[editIndex]) {
+    servicesCatalog[editIndex] = { name, recipe: currentRecipeTemp };
+  } else {
+    servicesCatalog.push({ name, recipe: currentRecipeTemp });
+  }
+
+  saveAndSync();
+  closeServiceModal();
+  showToast('Servicio guardado con éxito.');
+}
+
+function deleteService(index) {
+  if (confirm(`¿Estás seguro de eliminar el servicio "${servicesCatalog[index].name}"?`)) {
+    servicesCatalog.splice(index, 1);
+    saveAndSync();
+    showToast('Servicio eliminado.');
+  }
+}
+
+function applyServiceToStock() {
+  const select = document.getElementById('service-select');
+  if (!select || select.value === "") return alert('Selecciona un servicio válido.');
+
+  const idx = select.value;
+  const service = servicesCatalog[idx];
+  const count = Number(document.getElementById('service-count-input').value) || 1;
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('es-MX');
+  const timeStr = now.toLocaleTimeString('es-MX');
+
+  let errorOccurred = false;
+
+  service.recipe.forEach(r => {
+    const totalDeduction = r.qty * count;
+    const item = inventory.find(i => i.name.toLowerCase() === r.name.toLowerCase());
+
+    if (item) {
+      item.stock = Math.max(0, Number(item.stock || 0) - totalDeduction);
+      historyLogs.unshift({
+        dateRaw: dateStr,
+        time: timeStr,
+        type: 'Servicio',
+        item: item.name,
+        detail: `Aplicación de ${count}x "${service.name}": -${totalDeduction} ${r.unit} (${item.detail || 'General'})`
+      });
+    } else {
+      errorOccurred = true;
+    }
+  });
+
+  saveAndSync();
+  showToast(`Servicio "${service.name}" aplicado correctamente.`);
+}
+
 // TENDENCIAS
 function populateTrendSelect() {
   const select = document.getElementById('trend-item-select');
@@ -476,7 +710,7 @@ function loadItemTrendDetails() {
   const select = document.getElementById('trend-item-select');
   if (!select) return;
   const name = select.value;
-  const logs = historyLogs.filter(h => h.item === name && h.type === 'Dosificación');
+  const logs = historyLogs.filter(h => h.item === name);
 
   const tbody = document.getElementById('trend-history-tbody');
   if (!tbody) return;
@@ -495,22 +729,37 @@ function loadItemTrendDetails() {
 
   const totalVal = document.getElementById('trend-total-val');
   if (totalVal) {
-    totalVal.innerText = `${logs.length * 2} Piezas`;
+    const totalQty = logs.reduce((sum, l) => {
+      const match = l.detail.match(/-([0-9.]+)/);
+      return sum + (match ? Number(match[1]) : 0);
+    }, 0);
+    totalVal.innerText = `${totalQty} Piezas`;
   }
 }
 
-// SERVICIOS
+// SERVICIOS (CATÁLOGO RENDER)
 function renderServicesCatalog() {
   const tbody = document.getElementById('services-catalog-list');
   if (!tbody) return;
   tbody.innerHTML = '';
 
-  servicesCatalog.forEach(s => {
+  if (servicesCatalog.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#888;">No hay servicios registrados.</td></tr>`;
+    return;
+  }
+
+  servicesCatalog.forEach((s, index) => {
     const recipeText = s.recipe.map(r => `${r.name}: ${r.qty} ${r.unit}`).join(', ');
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><strong>${s.name}</strong></td>
       <td>${recipeText}</td>
+      <td>
+        <div class="action-btn-group">
+          <button class="btn-icon" title="Editar" onclick="openServiceModal(${index})"><i class="fa-solid fa-pen"></i></button>
+          <button class="btn-icon delete" title="Borrar" onclick="deleteService(${index})"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </td>
     `;
     tbody.appendChild(tr);
   });
