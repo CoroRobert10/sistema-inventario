@@ -26,7 +26,7 @@
         <i class="fa-solid fa-spa fa-3x" style="color: #c5a880;"></i>
       </div>
       <h2 class="fw-bold mb-1" style="font-family: 'Cinzel', serif; color: #fdfbf7; letter-spacing: 2px;">SHIFRA SPA</h2>
-      <p class="small text-muted mb-4" style="color: #d4c5b9 !important;">Sistema Integral de Control de Inventarios & Dosificación</p>
+      <p class="small mb-4" style="color: #d4c5b9 !important;">Sistema Integral de Control de Inventarios & Dosificación</p>
       <button class="btn btn-shifra-gold w-100 py-3 fw-bold text-uppercase shadow" onclick="entrarAlSistema()">
         Ingresar al Sistema <i class="fa-solid fa-arrow-right ms-2"></i>
       </button>
@@ -81,64 +81,62 @@
       </div>
     </div>
 
-    <!-- VISTA 0: INICIO (DASHBOARD TIPO TARJETAS) -->
-    <div id="viewInicio" class="container py-5 mt-3">
-      <div class="text-center mb-5">
-        <div class="mb-2"><i class="fa-solid fa-spa fa-2x" style="color: #c5a880;"></i></div>
-        <h1 class="fw-bold mb-1" style="font-family: 'Cinzel', serif; color: #3a322d; letter-spacing: 1px;">SHIFRA SPA</h1>
-        <p class="text-muted small">Sistema Integral de Control de Inventarios & Dosificación</p>
-      </div>
+    <!-- VISTA 0: INICIO / MENÚ PRINCIPAL (FONDO OSCURO) -->
+    <div id="viewInicio" class="inicio-dark-container py-5 min-vh-100">
+      <div class="container">
+        <div class="text-center mb-5">
+          <div class="mb-2"><i class="fa-solid fa-spa fa-3x" style="color: #c5a880;"></i></div>
+          <h1 class="fw-bold mb-1" style="font-family: 'Cinzel', serif; color: #fdfbf7; letter-spacing: 2px;">SHIFRA SPA</h1>
+          <p class="small" style="color: #d4c5b9 !important;">Sistema Integral de Control de Inventarios & Dosificación</p>
+        </div>
 
-      <div class="row g-4 mb-5">
-        <!-- Tarjeta 1: Inventario General -->
-        <div class="col-md-4">
-          <div class="home-card p-4 text-center h-100 rounded-4 shadow-sm bg-white border border-light-subtle cursor-pointer" onclick="switchView('inventario')">
-            <div class="mb-3 text-warning"><i class="fa-solid fa-boxes-stacked fa-2x"></i></div>
-            <h4 class="fw-bold mb-2" style="font-family: 'Cinzel', serif; color: #3a322d;">INVENTARIO GENERAL</h4>
-            <p class="text-muted small mb-3">Consulta el catálogo de artículos, existencias por ubicación y piezas totales.</p>
-            <span class="fw-bold small text-dark">Ir al Almacén &rarr;</span>
+        <div class="row g-4 mb-5">
+          <div class="col-md-4">
+            <div class="home-card p-4 text-center h-100 rounded-4 shadow bg-dark-card border border-warning border-opacity-25 cursor-pointer" onclick="switchView('inventario')">
+              <div class="mb-3 text-warning"><i class="fa-solid fa-boxes-stacked fa-2x"></i></div>
+              <h4 class="fw-bold mb-2" style="font-family: 'Cinzel', serif; color: #fdfbf7;">INVENTARIO GENERAL</h4>
+              <p class="small mb-3" style="color: #bfaea2;">Consulta el catálogo de artículos, existencias por ubicación y piezas totales.</p>
+              <span class="fw-bold small text-warning">Ir al Almacén &rarr;</span>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="home-card p-4 text-center h-100 rounded-4 shadow bg-dark-card border border-warning border-opacity-25 cursor-pointer" onclick="switchView('dosificacion')">
+              <div class="mb-3 text-warning"><i class="fa-solid fa-flask fa-2x"></i></div>
+              <h4 class="fw-bold mb-2" style="font-family: 'Cinzel', serif; color: #fdfbf7;">DOSIFICACIÓN DIARIA</h4>
+              <p class="small mb-3" style="color: #bfaea2;">Registra las salidas continuas e insumos utilizados durante la jornada diaria.</p>
+              <span class="fw-bold small text-warning">Dosificar &rarr;</span>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="home-card p-4 text-center h-100 rounded-4 shadow bg-dark-card border border-warning border-opacity-25 cursor-pointer" onclick="switchView('servicios')">
+              <div class="mb-3 text-warning"><i class="fa-solid fa-hand-sparkles fa-2x"></i></div>
+              <h4 class="fw-bold mb-2" style="font-family: 'Cinzel', serif; color: #fdfbf7;">POR SERVICIOS</h4>
+              <p class="small mb-3" style="color: #bfaea2;">Aplica paquetes de tratamientos y descuenta de forma automática los insumos.</p>
+              <span class="fw-bold small text-warning">Servicios &rarr;</span>
+            </div>
           </div>
         </div>
 
-        <!-- Tarjeta 2: Dosificación Diaria -->
-        <div class="col-md-4">
-          <div class="home-card p-4 text-center h-100 rounded-4 shadow-sm bg-white border border-light-subtle cursor-pointer" onclick="switchView('dosificacion')">
-            <div class="mb-3 text-warning"><i class="fa-solid fa-flask fa-2x"></i></div>
-            <h4 class="fw-bold mb-2" style="font-family: 'Cinzel', serif; color: #3a322d;">DOSIFICACIÓN DIARIA</h4>
-            <p class="text-muted small mb-3">Registra las salidas continuas e insumos utilizados durante la jornada diaria.</p>
-            <span class="fw-bold small text-dark">Dosificar &rarr;</span>
+        <div class="row g-4 justify-content-center">
+          <div class="col-md-5">
+            <div class="stat-card-dark text-center py-4 rounded-4 shadow border border-warning border-opacity-25">
+              <span class="text-uppercase fw-bold small d-block mb-1" style="letter-spacing: 1px; color: #c5a880;">TOTAL DE SKUS</span>
+              <h2 id="homeTotalSkus" class="fw-bold mb-0 display-6" style="color: #fdfbf7;">0</h2>
+            </div>
           </div>
-        </div>
-
-        <!-- Tarjeta 3: Por Servicios -->
-        <div class="col-md-4">
-          <div class="home-card p-4 text-center h-100 rounded-4 shadow-sm bg-white border border-light-subtle cursor-pointer" onclick="switchView('servicios')">
-            <div class="mb-3 text-warning"><i class="fa-solid fa-hand-sparkles fa-2x"></i></div>
-            <h4 class="fw-bold mb-2" style="font-family: 'Cinzel', serif; color: #3a322d;">POR SERVICIOS</h4>
-            <p class="text-muted small mb-3">Aplica paquetes de tratamientos y descuenta de forma automática los insumos.</p>
-            <span class="fw-bold small text-dark">Servicios &rarr;</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Estadísticas Globales en Inicio -->
-      <div class="row g-4 justify-content-center">
-        <div class="col-md-5">
-          <div class="stat-card text-center py-4">
-            <span class="text-uppercase fw-bold text-muted small d-block mb-1" style="letter-spacing: 1px;">TOTAL DE SKUS</span>
-            <h2 id="homeTotalSkus" class="fw-bold mb-0 text-dark display-6">0</h2>
-          </div>
-        </div>
-        <div class="col-md-5">
-          <div class="stat-card text-center py-4">
-            <span class="text-uppercase fw-bold text-muted small d-block mb-1" style="letter-spacing: 1px;">PIEZAS EN EXISTENCIA</span>
-            <h2 id="homeTotalUnits" class="fw-bold mb-0 text-dark display-6">0</h2>
+          <div class="col-md-5">
+            <div class="stat-card-dark text-center py-4 rounded-4 shadow border border-warning border-opacity-25">
+              <span class="text-uppercase fw-bold small d-block mb-1" style="letter-spacing: 1px; color: #c5a880;">PIEZAS EN EXISTENCIA</span>
+              <h2 id="homeTotalUnits" class="fw-bold mb-0 display-6" style="color: #fdfbf7;">0</h2>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- VISTA 1: INVENTARIO (CON SUS PESTAÑAS DE UBICACIONES) -->
+    <!-- VISTA 1: INVENTARIO -->
     <div id="viewInventario" class="container py-5 mt-3" style="display: none;">
       <div class="header-container">
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
@@ -153,7 +151,6 @@
           <h2 id="statTotal" class="fw-bold mb-0 text-dark">0</h2>
         </div>
 
-        <!-- Pestañas de Ubicaciones / Almacenes -->
         <div class="warehouse-tabs mb-4" id="warehouseTabsContainer">
           <div class="warehouse-tab active" onclick="setWarehouse('ALL', this)">TODAS las ubicaciones</div>
         </div>
@@ -502,7 +499,7 @@
     </div>
   </div>
 
-  <!-- MODALES NECESARIOS -->
+  <!-- MODALES -->
   <div class="modal fade" id="addServiceModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
       <div class="modal-content border-0 shadow" style="background: #faf8f5;">
