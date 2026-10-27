@@ -35,69 +35,51 @@ function volverAPortada() {
   if (mainApp) mainApp.style.display = 'none';
 }
 
-// CAMBIO DE PESTAÑAS
+// CAMBIO DE VISTAS Y PESTAÑAS
 function switchView(viewName) {
-  const inicioView = document.getElementById('viewInicio');
-  const invView = document.getElementById('viewInventario');
-  const dosiView = document.getElementById('viewDosificacion');
-  const servView = document.getElementById('viewServicios');
-  const aceiteView = document.getElementById('viewAceite');
-  const trendView = document.getElementById('viewTendencias');
-  const dashView = document.getElementById('viewDashboard');
+  const views = {
+    inicio: document.getElementById('viewInicio'),
+    inventario: document.getElementById('viewInventario'),
+    dosificacion: document.getElementById('viewDosificacion'),
+    servicios: document.getElementById('viewServicios'),
+    aceite: document.getElementById('viewAceite'),
+    tendencias: document.getElementById('viewTendencias'),
+    dashboard: document.getElementById('viewDashboard')
+  };
 
-  const btnInicio = document.getElementById('navBtnInicio');
-  const btnInv = document.getElementById('navBtnInventario');
-  const btnDosi = document.getElementById('navBtnDosificacion');
-  const btnServ = document.getElementById('navBtnServicios');
-  const btnAceite = document.getElementById('navBtnAceite');
-  const btnTrend = document.getElementById('navBtnTendencias');
-  const btnDash = document.getElementById('navBtnDashboard');
+  const buttons = {
+    inicio: document.getElementById('navBtnInicio'),
+    inventario: document.getElementById('navBtnInventario'),
+    dosificacion: document.getElementById('navBtnDosificacion'),
+    servicios: document.getElementById('navBtnServicios'),
+    aceite: document.getElementById('navBtnAceite'),
+    tendencias: document.getElementById('navBtnTendencias'),
+    dashboard: document.getElementById('navBtnDashboard')
+  };
 
-  if (!inicioView || !invView) return;
+  Object.values(views).forEach(v => { if (v) v.style.display = 'none'; });
+  Object.values(buttons).forEach(b => { if (b) b.classList.remove('active-nav-tab'); });
 
-  inicioView.style.display = 'none';
-  invView.style.display = 'none';
-  dosiView.style.display = 'none';
-  servView.style.display = 'none';
-  aceiteView.style.display = 'none';
-  trendView.style.display = 'none';
-  dashView.style.display = 'none';
-
-  if (btnInicio) btnInicio.classList.remove('active-nav-tab');
-  if (btnInv) btnInv.classList.remove('active-nav-tab');
-  if (btnDosi) btnDosi.classList.remove('active-nav-tab');
-  if (btnServ) btnServ.classList.remove('active-nav-tab');
-  if (btnAceite) btnAceite.classList.remove('active-nav-tab');
-  if (btnTrend) btnTrend.classList.remove('active-nav-tab');
-  if (btnDash) btnDash.classList.remove('active-nav-tab');
+  if (views[viewName]) {
+    views[viewName].style.display = 'block';
+  }
+  if (buttons[viewName]) {
+    buttons[viewName].classList.add('active-nav-tab');
+  }
 
   if (viewName === 'inventario') {
-    invView.style.display = 'block';
-    if (btnInv) btnInv.classList.add('active-nav-tab');
     saveAndRender();
   } else if (viewName === 'dosificacion') {
-    dosiView.style.display = 'block';
-    if (btnDosi) btnDosi.classList.add('active-nav-tab');
     initDosificacionView();
   } else if (viewName === 'servicios') {
-    servView.style.display = 'block';
-    if (btnServ) btnServ.classList.add('active-nav-tab');
     initServiciosView();
   } else if (viewName === 'aceite') {
-    aceiteView.style.display = 'block';
-    if (btnAceite) btnAceite.classList.add('active-nav-tab');
     initAceiteView();
   } else if (viewName === 'tendencias') {
-    trendView.style.display = 'block';
-    if (btnTrend) btnTrend.classList.add('active-nav-tab');
     initTendenciasView();
   } else if (viewName === 'dashboard') {
-    dashView.style.display = 'block';
-    if (btnDash) btnDash.classList.add('active-nav-tab');
     renderDashboardCharts();
   } else {
-    inicioView.style.display = 'block';
-    if (btnInicio) btnInicio.classList.add('active-nav-tab');
     updateHomeStats();
   }
 }
@@ -113,7 +95,6 @@ function updateHomeStats() {
   totalUnitsEl.innerText = totalUnits;
 }
 
-// RESTO DE FUNCIONES DE INVENTARIO Y DOSIFICACIÓN
 function saveAndRender() {
   localStorage.setItem('shifra_spa_db', JSON.stringify(inventory));
   buildWarehouseTabs();
@@ -221,7 +202,6 @@ function adjustStock(index, amount) {
   saveAndRender();
 }
 
-// FUNCIONES DE SOPORTE ADICIONALES
 function logMovement(type, itemName, detail) {
   const now = new Date();
   const timestamp = now.toLocaleDateString() + ' ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
