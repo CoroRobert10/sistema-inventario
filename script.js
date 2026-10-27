@@ -569,7 +569,7 @@ function updateGallonUI() {
   if (percentage <= 20) {
     liquidEl.style.background = 'linear-gradient(to top, #e74c3c, #f39c12)';
   } else {
-    liquidEl.style.background = 'linear-gradient(to top, #bda26b, #e5c98d)';
+    liquidEl.style.background = 'linear-gradient(to top, var(--gold-main), #e5c98d)';
   }
 
   if (percentText) percentText.innerText = `${percentage.toFixed(1)}%`;
@@ -602,7 +602,6 @@ function dispenseOilToTherapist() {
     remainingMl: gallonCurrentMl
   });
 
-  // También sincronizar con el ítem de aceite en el inventario general si existe
   const mainOilItem = inventory.find(i => i.name.toLowerCase().includes('aceite') || i.name.toLowerCase().includes('masaje'));
   if (mainOilItem) {
     mainOilItem.stock = Math.max(0, Number(mainOilItem.stock || 0) - mlToDispense);
@@ -645,7 +644,6 @@ function renderOilLogsTable() {
   tbody.innerHTML = '';
 
   const search = (document.getElementById('oil-log-search') ? document.getElementById('oil-log-search').value : '').toLowerCase().trim();
-
   const filteredLogs = oilDispenseLogs.filter(l => l.therapist.toLowerCase().includes(search));
 
   if (filteredLogs.length === 0) {
