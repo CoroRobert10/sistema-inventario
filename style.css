@@ -1,5 +1,5 @@
 /* ==============================================================================
-   SHIFRA SPA - ESTILOS ESTRUCTURALES Y ELEGANTES (LUXURY GOLD & DARK)
+   SHIFRA SPA - ESTILOS ESTRUCTURALES Y GARRAFÓN DINÁMICO DE ACEITE
    ============================================================================== */
 
 :root {
@@ -464,23 +464,10 @@ body {
   border-color: var(--gold-main);
 }
 
-.stock-info-box {
-  background: var(--gold-light);
-  padding: 10px 14px;
-  border-radius: var(--radius-md);
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  color: var(--gold-dark);
-  margin-bottom: 15px;
-}
-
-.recipe-preview-box {
-  background: #fdfdfd;
-  border: 1px dashed var(--border-color);
-  padding: 12px;
-  border-radius: var(--radius-md);
-  margin-bottom: 15px;
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 }
 
 .two-column-layout {
@@ -606,4 +593,112 @@ body {
   display: none;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   z-index: 2000;
+}
+
+/* ==============================================================================
+   ESTILOS ESPECÍFICOS PARA EL GARRAFÓN DE ACEITE (20L)
+   ============================================================================== */
+.text-center { text-align: center; }
+.style-margin-top { margin-top: 15px; }
+
+.gallon-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 15px auto;
+}
+
+.gallon-cap {
+  width: 45px;
+  height: 16px;
+  background: var(--gold-dark);
+  border-radius: 4px 4px 0 0;
+}
+
+.gallon-body {
+  width: 140px;
+  height: 200px;
+  background: #ffffff;
+  border: 4px solid var(--gold-main);
+  border-radius: 20px 20px 12px 12px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+  display: flex;
+  align-items: flex-end;
+}
+
+.gallon-liquid {
+  width: 100%;
+  background: linear-gradient(to top, var(--gold-main), #e5c98d);
+  transition: height 0.6s ease-in-out, background 0.4s;
+  position: relative;
+}
+
+.gallon-label-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 5;
+  color: #2b2b2b;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+.gallon-label-overlay span {
+  font-size: 26px;
+  font-weight: 800;
+  font-family: 'Cinzel', serif;
+}
+
+.gallon-label-overlay small {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.oil-quick-stats {
+  display: flex;
+  justify-content: space-around;
+  background: var(--gold-light);
+  padding: 10px;
+  border-radius: var(--radius-md);
+  margin: 15px 0;
+}
+
+.stat-pill {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+}
+
+.stat-pill strong {
+  font-size: 15px;
+  color: var(--gold-dark);
+}
+
+.quick-btn-row {
+  display: flex;
+  gap: 5px;
+}
+
+.btn-chip {
+  flex: 1;
+  background: #f0f0f0;
+  border: 1px solid var(--border-color);
+  padding: 8px 0;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-chip:hover {
+  background: var(--gold-main);
+  color: #ffffff;
 }
