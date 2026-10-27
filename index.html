@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Shifra Spa — Control de Inventario</title>
+  <title>Shifra Spa — Sistema Integral de Control</title>
   <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- FontAwesome Icons -->
@@ -14,18 +14,35 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <!-- Estilos -->
+  <!-- Estilos Personalizados -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- PANEL PRINCIPAL -->
-  <div id="mainApp">
+  <!-- PANTALLA DE PORTADA (SPLASH SCREEN) -->
+  <div id="viewPortada" class="portada-overlay d-flex justify-content-center align-items-center vh-100 vw-100 position-fixed top-0 start-0" style="z-index: 9999;">
+    <div class="portada-card text-center p-5 rounded-4 shadow-lg border border-warning border-opacity-25" style="max-width: 480px; width: 90%;">
+      <div class="mb-3">
+        <i class="fa-solid fa-spa fa-3x" style="color: #c5a880;"></i>
+      </div>
+      <h2 class="fw-bold mb-1" style="font-family: 'Cinzel', serif; color: #fdfbf7; letter-spacing: 2px;">SHIFRA SPA</h2>
+      <p class="small text-muted mb-4" style="color: #d4c5b9 !important;">Sistema Integral de Control de Inventarios & Dosificación</p>
+      <button class="btn btn-shifra-gold w-100 py-3 fw-bold text-uppercase shadow" onclick="entrarAlSistema()">
+        Ingresar al Sistema <i class="fa-solid fa-arrow-right ms-2"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- PANEL PRINCIPAL (OCULTO HASTA ENTRAR) -->
+  <div id="mainApp" style="display: none;">
     <!-- Barra Superior Spa -->
-    <div class="top-nav">
-      <div class="brand-title"><i class="fa-solid fa-spa me-2" style="color: #c5a880;"></i> Shifra Spa</div>
+    <div class="top-nav d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="brand-title"><i class="fa-solid fa-spa me-2" style="color: #c5a880;"></i> SHIFRA SPA</div>
       <div class="d-flex gap-2 flex-wrap align-items-center">
-        <button class="btn btn-sm btn-outline-dark px-3 active-nav-tab" id="navBtnInventario" onclick="switchView('inventario')">
+        <button class="btn btn-sm btn-outline-dark px-3 active-nav-tab" id="navBtnInicio" onclick="switchView('inicio')">
+          <i class="fa-solid fa-house me-1"></i> Inicio
+        </button>
+        <button class="btn btn-sm btn-outline-dark px-3" id="navBtnInventario" onclick="switchView('inventario')">
           <i class="fa-solid fa-boxes-stacked me-1"></i> Inventario
         </button>
         <button class="btn btn-sm btn-outline-dark px-3" id="navBtnDosificacion" onclick="switchView('dosificacion')">
@@ -58,11 +75,71 @@
         <button class="btn btn-sm btn-outline-secondary px-3" onclick="exportData()">
           <i class="fa-solid fa-download me-1"></i> Respaldar
         </button>
+        <button class="btn btn-sm btn-outline-danger px-3" onclick="volverAPortada()" title="Cerrar Sesión / Portada">
+          <i class="fa-solid fa-power-off"></i> Portada
+        </button>
       </div>
     </div>
 
-    <!-- VISTA 1: INVENTARIO -->
-    <div id="viewInventario" class="container py-5 mt-3">
+    <!-- VISTA 0: INICIO (DASHBOARD TIPO TARJETAS) -->
+    <div id="viewInicio" class="container py-5 mt-3">
+      <div class="text-center mb-5">
+        <div class="mb-2"><i class="fa-solid fa-spa fa-2x" style="color: #c5a880;"></i></div>
+        <h1 class="fw-bold mb-1" style="font-family: 'Cinzel', serif; color: #3a322d; letter-spacing: 1px;">SHIFRA SPA</h1>
+        <p class="text-muted small">Sistema Integral de Control de Inventarios & Dosificación</p>
+      </div>
+
+      <div class="row g-4 mb-5">
+        <!-- Tarjeta 1: Inventario General -->
+        <div class="col-md-4">
+          <div class="home-card p-4 text-center h-100 rounded-4 shadow-sm bg-white border border-light-subtle cursor-pointer" onclick="switchView('inventario')">
+            <div class="mb-3 text-warning"><i class="fa-solid fa-boxes-stacked fa-2x"></i></div>
+            <h4 class="fw-bold mb-2" style="font-family: 'Cinzel', serif; color: #3a322d;">INVENTARIO GENERAL</h4>
+            <p class="text-muted small mb-3">Consulta el catálogo de artículos, existencias por ubicación y piezas totales.</p>
+            <span class="fw-bold small text-dark">Ir al Almacén &rarr;</span>
+          </div>
+        </div>
+
+        <!-- Tarjeta 2: Dosificación Diaria -->
+        <div class="col-md-4">
+          <div class="home-card p-4 text-center h-100 rounded-4 shadow-sm bg-white border border-light-subtle cursor-pointer" onclick="switchView('dosificacion')">
+            <div class="mb-3 text-warning"><i class="fa-solid fa-flask fa-2x"></i></div>
+            <h4 class="fw-bold mb-2" style="font-family: 'Cinzel', serif; color: #3a322d;">DOSIFICACIÓN DIARIA</h4>
+            <p class="text-muted small mb-3">Registra las salidas continuas e insumos utilizados durante la jornada diaria.</p>
+            <span class="fw-bold small text-dark">Dosificar &rarr;</span>
+          </div>
+        </div>
+
+        <!-- Tarjeta 3: Por Servicios -->
+        <div class="col-md-4">
+          <div class="home-card p-4 text-center h-100 rounded-4 shadow-sm bg-white border border-light-subtle cursor-pointer" onclick="switchView('servicios')">
+            <div class="mb-3 text-warning"><i class="fa-solid fa-hand-sparkles fa-2x"></i></div>
+            <h4 class="fw-bold mb-2" style="font-family: 'Cinzel', serif; color: #3a322d;">POR SERVICIOS</h4>
+            <p class="text-muted small mb-3">Aplica paquetes de tratamientos y descuenta de forma automática los insumos.</p>
+            <span class="fw-bold small text-dark">Servicios &rarr;</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estadísticas Globales en Inicio -->
+      <div class="row g-4 justify-content-center">
+        <div class="col-md-5">
+          <div class="stat-card text-center py-4">
+            <span class="text-uppercase fw-bold text-muted small d-block mb-1" style="letter-spacing: 1px;">TOTAL DE SKUS</span>
+            <h2 id="homeTotalSkus" class="fw-bold mb-0 text-dark display-6">0</h2>
+          </div>
+        </div>
+        <div class="col-md-5">
+          <div class="stat-card text-center py-4">
+            <span class="text-uppercase fw-bold text-muted small d-block mb-1" style="letter-spacing: 1px;">PIEZAS EN EXISTENCIA</span>
+            <h2 id="homeTotalUnits" class="fw-bold mb-0 text-dark display-6">0</h2>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VISTA 1: INVENTARIO (CON SUS PESTAÑAS DE UBICACIONES) -->
+    <div id="viewInventario" class="container py-5 mt-3" style="display: none;">
       <div class="header-container">
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
           <h1 class="fw-bold mb-0" style="font-family: 'Cinzel', serif; color: #3a322d; letter-spacing: 1px;">Control de Inventario</h1>
@@ -71,30 +148,21 @@
           </button>
         </div>
 
-        <div class="row g-3 mb-4">
-          <div class="col-md-6">
-            <div class="stat-card">
-              <span class="text-uppercase fw-bold" style="color: #7a6e65; font-size: 0.75rem; letter-spacing: 1px;">Total de Artículos en Almacén</span>
-              <h2 id="statTotal" class="fw-bold mb-0 mt-1" style="color: #3a322d;">0</h2>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="stat-card">
-              <span class="text-uppercase fw-bold text-danger" style="font-size: 0.75rem; letter-spacing: 1px;">Alertas de Stock Bajo (≤3)</span>
-              <h2 id="statLow" class="fw-bold text-danger mb-0 mt-1">0</h2>
-            </div>
-          </div>
+        <div class="stat-card mb-4 text-center py-3">
+          <span class="text-uppercase fw-bold text-muted small d-block">TOTAL DE ARTÍCULOS EN ALMACÉN</span>
+          <h2 id="statTotal" class="fw-bold mb-0 text-dark">0</h2>
         </div>
 
+        <!-- Pestañas de Ubicaciones / Almacenes -->
         <div class="warehouse-tabs mb-4" id="warehouseTabsContainer">
-          <div class="warehouse-tab active" onclick="setWarehouse('ALL', this)">TODOS los almacenes</div>
+          <div class="warehouse-tab active" onclick="setWarehouse('ALL', this)">TODAS las ubicaciones</div>
         </div>
 
-        <div class="row g-3 align-items-center">
+        <div class="row g-3 align-items-center mb-4">
           <div class="col-md-8">
             <div class="search-box-spa d-flex align-items-center">
               <i class="fa-solid fa-magnifying-glass text-muted me-2"></i>
-              <input type="text" id="searchInput" class="form-control border-0 bg-transparent shadow-none" placeholder="Buscar por nombre, categoría o ubicación..." onkeyup="filterProducts()">
+              <input type="text" id="searchInput" class="form-control border-0 bg-transparent shadow-none" placeholder="Buscar por nombre o ubicación..." onkeyup="filterProducts()">
             </div>
           </div>
           <div class="col-md-4 text-md-end">
@@ -105,18 +173,17 @@
         </div>
       </div>
 
-      <div class="table-container p-3 mb-3 mt-4">
+      <div class="table-container p-3 mb-3">
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0 bg-transparent">
             <thead>
               <tr>
-                <th>Categoría</th>
-                <th>Artículo</th>
-                <th>Ubicación</th>
-                <th>Unidad</th>
-                <th>Stock Actual</th>
-                <th>Estatus</th>
-                <th class="text-end">Acciones</th>
+                <th>ARTÍCULO</th>
+                <th>UBICACIÓN</th>
+                <th>UNIDAD</th>
+                <th>PRECIO</th>
+                <th>STOCK ACTUAL</th>
+                <th class="text-end">ACCIONES</th>
               </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -139,7 +206,7 @@
         <div class="d-flex flex-wrap justify-content-between align-items-center">
           <div>
             <h1 class="fw-bold mb-1" style="font-family: 'Cinzel', serif; color: #3a322d; letter-spacing: 1px;">Módulo de Dosificación Diaria</h1>
-            <p class="text-muted small mb-0">Captura las salidas continuas o consumos del turno para descontarlos en lote de tus almacenes.</p>
+            <p class="text-muted small mb-0">Captura las salidas continuas o consumos del turno para descontarlos en lote.</p>
           </div>
           <div class="mt-2 mt-md-0">
             <button class="btn btn-outline-dark btn-sm px-3" data-bs-toggle="modal" data-bs-target="#dosiLogModal" onclick="renderDosiLogsByDateList()">
@@ -197,7 +264,7 @@
                     </tr>
                   </thead>
                   <tbody id="dosiTableBody">
-                    <tr><td colspan="4" class="text-center py-4 text-muted">No has agregado artículos a la lista de dosificación.</td></tr>
+                    <tr><td colspan="4" class="text-center py-4 text-muted">No has agregado artículos a la lista.</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -213,13 +280,13 @@
       </div>
     </div>
 
-    <!-- VISTA: DOSIFICACIÓN POR SERVICIOS (RECETAS) -->
+    <!-- VISTA: DOSIFICACIÓN POR SERVICIOS -->
     <div id="viewServicios" class="container py-5 mt-3" style="display: none;">
       <div class="header-container mb-4">
         <div class="d-flex flex-wrap justify-content-between align-items-center">
           <div>
             <h1 class="fw-bold mb-1" style="font-family: 'Cinzel', serif; color: #3a322d; letter-spacing: 1px;">Dosificación por Servicios / Tratamientos</h1>
-            <p class="text-muted small mb-0">Configura los paquetes de insumos por servicio y descuenta automáticamente el stock según las atenciones brindadas.</p>
+            <p class="text-muted small mb-0">Configura los paquetes de insumos por servicio y descuenta automáticamente el stock.</p>
           </div>
           <button class="btn btn-shifra-gold px-4 py-2 mt-2 mt-md-0" data-bs-toggle="modal" data-bs-target="#addServiceModal" onclick="resetServiceForm()">
             <i class="fa-solid fa-plus me-1"></i> Nuevo Servicio / Receta
@@ -267,7 +334,7 @@
                   </tr>
                 </thead>
                 <tbody id="servicesTableBody">
-                  <tr><td colspan="3" class="text-center py-4 text-muted">No hay servicios configurados. Crea uno nuevo.</td></tr>
+                  <tr><td colspan="3" class="text-center py-4 text-muted">No hay servicios configurados.</td></tr>
                 </tbody>
               </table>
             </div>
@@ -324,12 +391,11 @@
                 </div>
 
                 <div class="mb-3">
-                  <label class="form-label small fw-bold text-muted">Cantidad a Extraer (en Mililitros o Litros)</label>
+                  <label class="form-label small fw-bold text-muted">Cantidad a Extraer (Litros o Mililitros)</label>
                   <div class="input-group">
                     <input type="number" step="0.05" id="oilExtractQty" class="form-control form-control-lg text-center fw-bold fs-4 border-warning" min="0.05" value="0.25" required>
-                    <span class="input-group-text bg-white fw-bold text-muted" id="oilUnitLabel">Litros (Ej. 0.25 = 250ml)</span>
+                    <span class="input-group-text bg-white fw-bold text-muted">Litros (Ej. 0.25 = 250ml)</span>
                   </div>
-                  <div class="form-text small">💡 Tip: Puedes ingresar 0.25 para 250ml, 0.5 para medio litro, o 1 para 1 litro.</div>
                 </div>
 
                 <button type="submit" class="btn btn-shifra-gold w-100 py-3 fw-bold text-uppercase shadow-sm">
@@ -346,11 +412,11 @@
                     <tr style="background: #efe7dc;">
                       <th>Hora</th>
                       <th>Terapeuta</th>
-                      <th class="text-end">Cantidad Extraída</th>
+                      <th class="text-end">Cantidad</th>
                     </tr>
                   </thead>
                   <tbody id="oilLogsTableBody">
-                    <tr><td colspan="3" class="text-center py-2 text-muted">Sin extracciones registradas hoy.</td></tr>
+                    <tr><td colspan="3" class="text-center py-2 text-muted">Sin extracciones hoy.</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -361,7 +427,7 @@
       </div>
     </div>
 
-    <!-- VISTA: TENDENCIAS DE CONSUMO CON BUSCADOR -->
+    <!-- VISTA: TENDENCIAS -->
     <div id="viewTendencias" class="container py-5 mt-3" style="display: none;">
       <div class="header-container mb-4">
         <h1 class="fw-bold mb-1" style="font-family: 'Cinzel', serif; color: #3a322d; letter-spacing: 1px;">Tendencias de Consumo</h1>
@@ -375,10 +441,7 @@
             
             <div class="mb-3">
               <label class="form-label small fw-bold text-muted">Buscar Artículo</label>
-              <div class="input-group">
-                <span class="input-group-text bg-white border-light-subtle"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
-                <input type="text" id="trendSearchInput" class="form-control bg-white border-light-subtle" placeholder="Escribe para filtrar..." onkeyup="filterTrendItems()">
-              </div>
+              <input type="text" id="trendSearchInput" class="form-control bg-white border-light-subtle" placeholder="Escribe para filtrar..." onkeyup="filterTrendItems()">
             </div>
 
             <div class="mb-3">
@@ -387,14 +450,14 @@
             </div>
 
             <div class="p-3 bg-white rounded border border-light-subtle text-center">
-              <span class="text-uppercase small text-muted d-block mb-1">Total Consumido Histórico Registrado</span>
+              <span class="text-uppercase small text-muted d-block mb-1">Total Consumido Histórico</span>
               <h2 id="trendTotalQty" class="fw-bold text-primary mb-0">0 Piezas</h2>
             </div>
           </div>
         </div>
         <div class="col-md-7">
           <div class="table-container p-4 h-100">
-            <h5 class="fw-bold mb-3" style="font-family: 'Cinzel', serif; color: #3a322d;"><i class="fa-solid fa-clock-rotate-left me-2" style="color: #c5a880;"></i> Desglose de Salidas Históricas</h5>
+            <h5 class="fw-bold mb-3" style="font-family: 'Cinzel', serif; color: #3a322d;"><i class="fa-solid fa-clock-rotate-left me-2" style="color: #c5a880;"></i> Desglose Histórico</h5>
             <div class="table-responsive" style="max-height: 290px; overflow-y: auto;">
               <table class="table table-sm table-hover align-middle mb-0 bg-white border rounded">
                 <thead>
@@ -402,11 +465,11 @@
                     <th>Fecha</th>
                     <th>Hora</th>
                     <th>Almacén</th>
-                    <th class="text-center">Cantidad Salida</th>
+                    <th class="text-center">Cantidad</th>
                   </tr>
                 </thead>
                 <tbody id="trendDetailTableBody">
-                  <tr><td colspan="4" class="text-center py-3 text-muted">Selecciona un artículo para ver su detalle.</td></tr>
+                  <tr><td colspan="4" class="text-center py-3 text-muted">Selecciona un artículo.</td></tr>
                 </tbody>
               </table>
             </div>
@@ -415,70 +478,34 @@
       </div>
     </div>
 
-    <!-- VISTA: DASHBOARD Y GRÁFICOS -->
+    <!-- VISTA: DASHBOARD GRÁFICO -->
     <div id="viewDashboard" class="container py-5 mt-3" style="display: none;">
       <div class="header-container mb-4">
-        <h1 class="fw-bold mb-1" style="font-family: 'Cinzel', serif; color: #3a322d; letter-spacing: 1px;">Análisis Gráfico de Almacenes</h1>
-        <p class="text-muted small mb-0">Visualización en tiempo real de volúmenes, categorías y alertas.</p>
-      </div>
-
-      <div class="row g-3 mb-4">
-        <div class="col-md-3">
-          <div class="stat-card text-center py-3">
-            <span class="text-uppercase fw-bold text-muted small d-block">Total de SKUs</span>
-            <h2 id="dashSkus" class="fw-bold mb-0 mt-1 text-dark">0</h2>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="stat-card text-center py-3">
-            <span class="text-uppercase fw-bold text-muted small d-block">Piezas Físicas Totales</span>
-            <h2 id="dashUnits" class="fw-bold mb-0 mt-1 text-dark">0</h2>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="stat-card text-center py-3">
-            <span class="text-uppercase fw-bold text-primary small d-block">Almacenes Activos</span>
-            <h2 id="dashWarehouses" class="fw-bold mb-0 mt-1 text-primary">0</h2>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="stat-card text-center py-3">
-            <span class="text-uppercase fw-bold text-danger small d-block">Stock Crítico (≤3)</span>
-            <h2 id="dashLowStock" class="fw-bold mb-0 mt-1 text-danger">0</h2>
-          </div>
-        </div>
+        <h1 class="fw-bold mb-1" style="font-family: 'Cinzel', serif; color: #3a322d; letter-spacing: 1px;">Análisis Gráfico</h1>
+        <p class="text-muted small mb-0">Visualización en tiempo real de volúmenes y categorías.</p>
       </div>
 
       <div class="row g-4 mb-4">
         <div class="col-md-6">
           <div class="table-container p-4 h-100">
-            <h5 class="fw-bold mb-3" style="font-family: 'Cinzel', serif; color: #3a322d;">Distribución de SKUs por Almacén</h5>
+            <h5 class="fw-bold mb-3" style="font-family: 'Cinzel', serif; color: #3a322d;">Distribución de SKUs por Ubicación</h5>
             <div style="position: relative; height:260px;"><canvas id="chartDoughnut"></canvas></div>
           </div>
         </div>
         <div class="col-md-6">
           <div class="table-container p-4 h-100">
-            <h5 class="fw-bold mb-3" style="font-family: 'Cinzel', serif; color: #3a322d;">Volumen Total de Piezas por Almacén</h5>
+            <h5 class="fw-bold mb-3" style="font-family: 'Cinzel', serif; color: #3a322d;">Volumen Total de Piezas</h5>
             <div style="position: relative; height:260px;"><canvas id="chartBarUnits"></canvas></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="row g-4">
-        <div class="col-12">
-          <div class="table-container p-4">
-            <h5 class="fw-bold mb-3 text-danger" style="font-family: 'Cinzel', serif;"><i class="fa-solid fa-triangle-exclamation me-2"></i>Alertas de Stock Bajo por Almacén</h5>
-            <div style="position: relative; height:240px;"><canvas id="chartBarLow"></canvas></div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: CREAR / EDITAR SERVICIO Y SUS INSUMOS -->
+  <!-- MODALES NECESARIOS -->
   <div class="modal fade" id="addServiceModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
-      <div class="modal-content border-0 shadow" style="border: 1px solid rgba(197, 168, 128, 0.4) !important; background: #faf8f5;">
+      <div class="modal-content border-0 shadow" style="background: #faf8f5;">
         <div class="modal-header" style="background: #3a322d; color: white;">
           <h5 class="modal-title fw-bold" id="modalServiceTitle" style="color: #c5a880;"><i class="fa-solid fa-hand-sparkles me-2"></i> Configurar Servicio y Receta</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -488,43 +515,24 @@
             <input type="hidden" id="editServiceIndex" value="-1">
             <div class="mb-3">
               <label class="form-label small fw-bold text-muted">Nombre del Servicio / Tratamiento</label>
-              <input type="text" id="serviceName" class="form-control bg-white border-light-subtle fw-bold" required placeholder="Ej. Maní Spa, Masaje relajante...">
+              <input type="text" id="serviceName" class="form-control bg-white border-light-subtle fw-bold" required placeholder="Ej. Masaje relajante...">
             </div>
-
             <div class="p-3 bg-white rounded border border-light-subtle mb-3">
-              <label class="form-label small fw-bold text-muted mb-2">Agregar Insumo a la Receta del Servicio</label>
+              <label class="form-label small fw-bold text-muted mb-2">Agregar Insumo a la Receta</label>
               <div class="row g-2 align-items-end">
-                <div class="col-md-7">
-                  <select id="modalItemSelect" class="form-select bg-white border-light-subtle"></select>
-                </div>
-                <div class="col-md-3">
-                  <input type="number" id="modalItemQty" class="form-control text-center fw-bold" min="1" value="1" placeholder="Cant">
-                </div>
-                <div class="col-md-2">
-                  <button type="button" class="btn btn-outline-dark w-100" onclick="addRecipeItemToCurrentService()"><i class="fa-solid fa-plus"></i></button>
-                </div>
+                <div class="col-md-7"><select id="modalItemSelect" class="form-select bg-white border-light-subtle"></select></div>
+                <div class="col-md-3"><input type="number" id="modalItemQty" class="form-control text-center fw-bold" min="1" value="1"></div>
+                <div class="col-md-2"><button type="button" class="btn btn-outline-dark w-100" onclick="addRecipeItemToCurrentService()"><i class="fa-solid fa-plus"></i></button></div>
               </div>
             </div>
-
             <div class="mb-3">
-              <label class="form-label small fw-bold text-muted">Insumos Configurados en este Servicio:</label>
               <div class="table-responsive" style="max-height: 180px; overflow-y: auto;">
                 <table class="table table-sm table-hover align-middle mb-0 bg-white border rounded">
-                  <thead>
-                    <tr style="background: #efe7dc;">
-                      <th>Almacén</th>
-                      <th>Artículo</th>
-                      <th class="text-center">Cant. requerida</th>
-                      <th class="text-end">Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody id="modalRecipeTableBody">
-                    <tr><td colspan="4" class="text-center py-3 text-muted">Aún no hay insumos agregados.</td></tr>
-                  </tbody>
+                  <thead><tr style="background: #efe7dc;"><th>Ubicación</th><th>Artículo</th><th class="text-center">Cant.</th><th class="text-end">Acción</th></tr></thead>
+                  <tbody id="modalRecipeTableBody"><tr><td colspan="4" class="text-center py-3 text-muted">Sin insumos.</td></tr></tbody>
                 </table>
               </div>
             </div>
-
             <button type="submit" class="btn btn-shifra-gold w-100 py-2 fs-6">Guardar Servicio</button>
           </form>
         </div>
@@ -532,179 +540,83 @@
     </div>
   </div>
 
-  <!-- MODAL: TICKET / NOTA DE SALIDA -->
   <div class="modal fade" id="dosiTicketModal" tabindex="-1">
     <div class="modal-dialog">
-      <div class="modal-content border-0 shadow" style="border: 1px solid rgba(197, 168, 128, 0.4) !important; background: #faf8f5;">
+      <div class="modal-content border-0 shadow" style="background: #faf8f5;">
         <div class="modal-header" style="background: #3a322d; color: white;">
           <h5 class="modal-title fw-bold" style="color: #c5a880;"><i class="fa-solid fa-receipt me-2"></i> Nota de Salida / Turno</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
-        <div class="modal-body p-4 bg-white m-3 rounded border" id="ticketPrintArea">
+        <div class="modal-body p-4 bg-white m-3 rounded border">
           <div class="text-center mb-3 border-bottom pb-3">
             <h4 class="fw-bold mb-0" style="font-family: 'Cinzel', serif; color: #3a322d;">Shifra Spa</h4>
-            <span class="small text-muted" id="ticketSubtitle">Comprobante de Dosificación</span>
+            <span class="small text-muted" id="ticketSubtitle">Comprobante</span>
             <div id="ticketDate" class="small fw-bold text-dark mt-1">Fecha: -</div>
           </div>
           <div id="ticketItemsList" class="small mb-3" style="max-height: 200px; overflow-y: auto;"></div>
-          <div class="border-top pt-2 text-end">
-            <span class="fw-bold small text-muted">Total de Artículos: </span><span id="ticketTotalCount" class="fw-bold">0</span>
-          </div>
+          <div class="border-top pt-2 text-end"><span class="fw-bold small">Total: </span><span id="ticketTotalCount" class="fw-bold">0</span></div>
         </div>
-        <div class="modal-footer justify-content-between">
-          <button class="btn btn-sm btn-outline-dark" onclick="window.print()"><i class="fa-solid fa-print me-1"></i> Imprimir Nota</button>
-          <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-        </div>
+        <div class="modal-footer"><button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cerrar</button></div>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: HISTORIAL POR DÍA -->
   <div class="modal fade" id="dosiLogModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
-      <div class="modal-content border-0 shadow" style="border: 1px solid rgba(197, 168, 128, 0.4) !important; background: #faf8f5;">
+      <div class="modal-content border-0 shadow" style="background: #faf8f5;">
         <div class="modal-header" style="background: #3a322d; color: white;">
-          <h5 class="modal-title fw-bold" style="color: #c5a880;"><i class="fa-solid fa-calendar-check me-2"></i> Bitácora de Dosificaciones por Día</h5>
+          <h5 class="modal-title fw-bold" style="color: #c5a880;">Bitácora por Día</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body p-4">
           <div class="row mb-3 align-items-center">
-            <div class="col-md-5">
-              <label class="form-label small fw-bold text-muted">Seleccionar Fecha a Consultar</label>
-              <select id="dosiDateSelect" class="form-select bg-white border-light-subtle fw-bold" onchange="renderDosiLogsByDateList()"></select>
-            </div>
-            <div class="col-md-7 text-md-end pt-2">
-              <span id="dosiLogTotalItems" class="badge bg-secondary fs-6">0 ítems dosificados en este día</span>
-            </div>
+            <div class="col-md-5"><select id="dosiDateSelect" class="form-select bg-white border-light-subtle fw-bold" onchange="renderDosiLogsByDateList()"></select></div>
+            <div class="col-md-7 text-md-end"><span id="dosiLogTotalItems" class="badge bg-secondary fs-6">0 ítems</span></div>
           </div>
           <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
             <table class="table table-sm table-hover align-middle mb-0 bg-white border rounded">
-              <thead>
-                <tr style="background: #efe7dc;">
-                  <th>Hora</th>
-                  <th>Categoría / Almacén</th>
-                  <th>Artículo</th>
-                  <th class="text-center">Cantidad Salida</th>
-                </tr>
-              </thead>
-              <tbody id="dosiLogTableBody">
-                <tr><td colspan="4" class="text-center py-4 text-muted">No hay registros para la fecha seleccionada.</td></tr>
-              </tbody>
+              <thead><tr style="background: #efe7dc;"><th>Hora</th><th>Ubicación</th><th>Artículo</th><th class="text-center">Cant.</th></tr></thead>
+              <tbody id="dosiLogTableBody"><tr><td colspan="4" class="text-center py-4 text-muted">Sin registros.</td></tr></tbody>
             </table>
           </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cerrar</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: HISTORIAL GENERAL -->
   <div class="modal fade" id="historyModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
-      <div class="modal-content border-0 shadow" style="border: 1px solid rgba(197, 168, 128, 0.4) !important; background: #faf8f5;">
+      <div class="modal-content border-0 shadow" style="background: #faf8f5;">
         <div class="modal-header" style="background: #3a322d; color: white;">
-          <h5 class="modal-title fw-bold" style="color: #c5a880;"><i class="fa-solid fa-clock-rotate-left me-2"></i> Historial General de Movimientos</h5>
+          <h5 class="modal-title fw-bold" style="color: #c5a880;">Historial General</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body p-3">
-          <div class="row g-2 mb-3 bg-white p-2 rounded border border-light-subtle align-items-end">
-            <div class="col-md-4">
-              <label class="form-label small fw-bold text-muted mb-1">Desde Fecha</label>
-              <input type="date" id="filterDateFrom" class="form-control form-control-sm" onchange="renderHistoryTable()">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label small fw-bold text-muted mb-1">Hasta Fecha</label>
-              <input type="date" id="filterDateTo" class="form-control form-control-sm" onchange="renderHistoryTable()">
-            </div>
-            <div class="col-md-4 text-md-end">
-              <button class="btn btn-sm btn-outline-secondary w-100" onclick="clearHistoryDateFilter()">Limpiar Filtro</button>
-            </div>
-          </div>
           <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
             <table class="table table-sm table-hover align-middle mb-0">
-              <thead>
-                <tr style="background: #efe7dc;">
-                  <th>Fecha y Hora</th>
-                  <th>Tipo</th>
-                  <th>Artículo</th>
-                  <th>Detalle / Cambio</th>
-                </tr>
-              </thead>
+              <thead><tr style="background: #efe7dc;"><th>Fecha y Hora</th><th>Tipo</th><th>Artículo</th><th>Detalle</th></tr></thead>
               <tbody id="historyTableBody"></tbody>
             </table>
           </div>
         </div>
-        <div class="modal-footer justify-content-between">
-          <button class="btn btn-sm btn-outline-danger" onclick="clearHistory()"><i class="fa-solid fa-trash me-1"></i> Borrar Historial</button>
-          <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-        </div>
       </div>
     </div>
   </div>
 
-  <!-- OTROS MODALES -->
   <div class="modal fade" id="transferModal" tabindex="-1">
     <div class="modal-dialog">
-      <div class="modal-content border-0 shadow" style="border: 1px solid rgba(197, 168, 128, 0.4) !important; background: #faf8f5;">
-        <div class="modal-header" style="background: #3a322d; color: white;">
-          <h5 class="modal-title fw-bold" style="color: #c5a880;"><i class="fa-solid fa-arrow-right-arrow-left me-2"></i> Traspaso de Almacén</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
+      <div class="modal-content border-0 shadow" style="background: #faf8f5;">
+        <div class="modal-header" style="background: #3a322d; color: white;"><h5 class="modal-title fw-bold" style="color: #c5a880;">Traspaso</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
         <div class="modal-body p-4">
           <form id="transferForm">
-            <div class="mb-3">
-              <label class="form-label small fw-bold text-muted">Artículo a Traspasar</label>
-              <select id="tfItemSelect" class="form-select bg-white border-light-subtle" required onchange="updateTransferMax()"></select>
-            </div>
+            <div class="mb-3"><label class="form-label small fw-bold">Artículo</label><select id="tfItemSelect" class="form-select bg-white" required onchange="updateTransferMax()"></select></div>
             <div class="row g-2 mb-3">
-              <div class="col-md-6">
-                <label class="form-label small fw-bold text-muted">Almacén Origen</label>
-                <input type="text" id="tfOrigin" class="form-control bg-light" readonly>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label small fw-bold text-muted">Stock Disponible</label>
-                <input type="text" id="tfMaxStock" class="form-control bg-light fw-bold text-primary" readonly value="0">
-              </div>
+              <div class="col-6"><label class="form-label small fw-bold">Origen</label><input type="text" id="tfOrigin" class="form-control bg-light" readonly></div>
+              <div class="col-6"><label class="form-label small fw-bold">Stock</label><input type="text" id="tfMaxStock" class="form-control bg-light fw-bold text-primary" readonly value="0"></div>
             </div>
-            <div class="mb-3">
-              <label class="form-label small fw-bold text-muted">Almacén / Categoría Destino</label>
-              <input type="text" id="tfDestination" class="form-control bg-white border-light-subtle" required placeholder="Ej. BARBERIA, ESTETICA..." list="warehouseOptions">
-              <datalist id="warehouseOptions"></datalist>
-            </div>
-            <div class="mb-3">
-              <label class="form-label small fw-bold text-muted">Cantidad a Traspasar</label>
-              <input type="number" id="tfQuantity" class="form-control form-control-lg border-warning text-center fw-bold fs-4" min="1" value="1" required>
-            </div>
-            <button type="submit" class="btn btn-shifra-gold w-100 py-2 fs-6">Ejecutar Traspaso</button>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="quickCountModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content border-0 shadow" style="border: 1px solid rgba(197, 168, 128, 0.4) !important; background: #faf8f5;">
-        <div class="modal-header" style="background: #3a322d; color: white;">
-          <h5 class="modal-title fw-bold" style="color: #c5a880;"><i class="fa-solid fa-clipboard-check me-2"></i> Conteo Físico Rápido</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body p-4 text-center">
-          <h5 id="qcItemName" class="fw-bold mb-1" style="color: #3a322d;">-</h5>
-          <span id="qcItemDetail" class="text-muted small d-block mb-3">-</span>
-          <div class="p-3 bg-white rounded border border-light-subtle mb-3">
-            <div class="row">
-              <div class="col-6 text-start"><span class="small text-muted d-block">Stock Anterior</span><span id="qcOldStock" class="fs-4 fw-bold text-dark">0</span></div>
-              <div class="col-6 text-end"><span class="small text-muted d-block">Diferencia</span><span id="qcDiff" class="fs-4 fw-bold text-secondary">0</span></div>
-            </div>
-          </div>
-          <form id="quickCountForm">
-            <input type="hidden" id="qcIndex" value="-1">
-            <label class="form-label fw-bold text-start w-100 mb-1">Ingresa la Cantidad Contada en Físico:</label>
-            <input type="number" id="qcNewStock" class="form-control form-control-lg text-center fw-bold fs-3 border-warning mb-3" min="0" required oninput="calculateQcDiff()">
-            <button type="submit" class="btn btn-shifra-gold w-100 py-2 fs-6">Confirmar Conteo</button>
+            <div class="mb-3"><label class="form-label small fw-bold">Destino</label><input type="text" id="tfDestination" class="form-control bg-white" required list="warehouseOptions"><datalist id="warehouseOptions"></datalist></div>
+            <div class="mb-3"><label class="form-label small fw-bold">Cantidad</label><input type="number" id="tfQuantity" class="form-control form-control-lg border-warning text-center fw-bold fs-4" min="1" value="1" required></div>
+            <button type="submit" class="btn btn-shifra-gold w-100 py-2">Ejecutar Traspaso</button>
           </form>
         </div>
       </div>
@@ -713,16 +625,12 @@
 
   <div class="modal fade" id="importExcelModal" tabindex="-1">
     <div class="modal-dialog">
-      <div class="modal-content border-0 shadow" style="border: 1px solid rgba(197, 168, 128, 0.4) !important; background: #faf8f5;">
-        <div class="modal-header" style="background: #3a322d; color: white;">
-          <h5 class="modal-title fw-bold"><i class="fa-solid fa-file-excel me-2" style="color: #c5a880;"></i> Subir Excel de Conteos</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
+      <div class="modal-content border-0 shadow" style="background: #faf8f5;">
+        <div class="modal-header" style="background: #3a322d; color: white;"><h5 class="modal-title fw-bold">Cargar Excel</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
         <div class="modal-body text-center p-4">
           <div class="border border-2 border-dashed rounded p-4 bg-white cursor-pointer" onclick="document.getElementById('excelFile').click()" style="border-color: #c5a880 !important;">
             <i class="fa-solid fa-cloud-arrow-up fa-3x mb-2" style="color: #c5a880;"></i>
-            <p class="fw-bold mb-1 text-dark">Haz clic para seleccionar tu archivo Excel</p>
-            <span class="text-muted small">Formatos compatibles: .xlsx, .xls</span>
+            <p class="fw-bold mb-1">Haz clic para seleccionar tu Excel</p>
             <input type="file" id="excelFile" class="d-none" accept=".xlsx, .xls" onchange="handleExcelUpload(event)">
           </div>
           <div id="uploadStatus" class="mt-3 fw-bold small text-success"></div>
@@ -733,37 +641,19 @@
 
   <div class="modal fade" id="addProductModal" tabindex="-1">
     <div class="modal-dialog">
-      <div class="modal-content border-0 shadow" style="border: 1px solid rgba(197, 168, 128, 0.4) !important; background: #faf8f5;">
-        <div class="modal-header" style="background: #3a322d; color: white;">
-          <h5 class="modal-title fw-bold" id="modalProductTitle" style="color: #c5a880;">Registrar Nuevo Artículo</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
+      <div class="modal-content border-0 shadow" style="background: #faf8f5;">
+        <div class="modal-header" style="background: #3a322d; color: white;"><h5 class="modal-title fw-bold" id="modalProductTitle" style="color: #c5a880;">Nuevo Artículo</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
         <div class="modal-body">
           <form id="productForm">
             <input type="hidden" id="editIndex" value="-1">
-            <div class="mb-3">
-              <label class="form-label small fw-bold text-muted">Categoría / Almacén</label>
-              <input type="text" id="pCat" class="form-control bg-white border-light-subtle" required placeholder="Ej. ALMACEN GENERAL, RETAIL...">
-            </div>
-            <div class="mb-3">
-              <label class="form-label small fw-bold text-muted">Nombre del Artículo</label>
-              <input type="text" id="pName" class="form-control bg-white border-light-subtle" required placeholder="Nombre del producto...">
-            </div>
-            <div class="mb-3">
-              <label class="form-label small fw-bold text-muted">Ubicación / Detalle</label>
-              <input type="text" id="pDetail" class="form-control bg-white border-light-subtle" placeholder="Ej. Insumos, Cabina 1...">
-            </div>
+            <div class="mb-3"><label class="form-label small fw-bold">Ubicación</label><input type="text" id="pCat" class="form-control bg-white" required placeholder="Ej. RECEPCION, ESTETICA..."></div>
+            <div class="mb-3"><label class="form-label small fw-bold">Nombre</label><input type="text" id="pName" class="form-control bg-white" required></div>
             <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="form-label small fw-bold text-muted">Unidad</label>
-                <input type="text" id="pUnit" class="form-control bg-white border-light-subtle" value="Piezas">
-              </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label small fw-bold text-muted">Stock Inicial</label>
-                <input type="number" id="pStock" class="form-control bg-white border-light-subtle" min="0" value="0" required>
-              </div>
+              <div class="col-6 mb-3"><label class="form-label small fw-bold">Unidad</label><input type="text" id="pUnit" class="form-control bg-white" value="Piezas"></div>
+              <div class="col-6 mb-3"><label class="form-label small fw-bold">Precio</label><input type="number" step="0.01" id="pPrice" class="form-control bg-white" value="0.00"></div>
             </div>
-            <button type="submit" class="btn btn-shifra-gold w-100 py-2 mt-2" id="btnSubmitProduct">Guardar Artículo</button>
+            <div class="mb-3"><label class="form-label small fw-bold">Stock</label><input type="number" id="pStock" class="form-control bg-white" min="0" value="0" required></div>
+            <button type="submit" class="btn btn-shifra-gold w-100 py-2" id="btnSubmitProduct">Guardar</button>
           </form>
         </div>
       </div>
