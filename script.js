@@ -680,7 +680,7 @@ function calculateTrend() {
   }
 }
 
-// HISTORIAL POR DÍAS Y GENERAL
+// HISTORIAL POR DÍAS
 function renderDosiLogsByDateList() {
   const select = document.getElementById('dosiDateSelect');
   const tbody = document.getElementById('dosiLogTableBody');
@@ -819,7 +819,7 @@ function renderDashboardCharts() {
   }
 }
 
-// MOVIMIENTOS E HISTORIAL GENERAL
+// MOVIMIENTOS E HISTORIAL
 function logMovement(type, itemName, detail) {
   const now = new Date();
   const dateStrYMD = now.toISOString().split('T')[0];
