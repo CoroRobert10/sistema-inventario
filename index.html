@@ -105,7 +105,7 @@
         </div>
       </div>
 
-      <div class="table-container p-3 mb-3">
+      <div class="table-container p-3 mb-3 mt-4">
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0 bg-transparent">
             <thead>
@@ -213,7 +213,7 @@
       </div>
     </div>
 
-    <!-- VISTA: DOSIFICACIÓN POR SERVICIOS (RECETAS / PACKS) -->
+    <!-- VISTA: DOSIFICACIÓN POR SERVICIOS (RECETAS) -->
     <div id="viewServicios" class="container py-5 mt-3" style="display: none;">
       <div class="header-container mb-4">
         <div class="d-flex flex-wrap justify-content-between align-items-center">
@@ -276,7 +276,7 @@
       </div>
     </div>
 
-    <!-- VISTA NUEVA: GALÓN INTERACTIVO DE ACEITE -->
+    <!-- VISTA: GALÓN INTERACTIVO DE ACEITE -->
     <div id="viewAceite" class="container py-5 mt-3" style="display: none;">
       <div class="header-container mb-4">
         <h1 class="fw-bold mb-1" style="font-family: 'Cinzel', serif; color: #3a322d; letter-spacing: 1px;">Control de Aceite Corporal</h1>
@@ -284,19 +284,14 @@
       </div>
 
       <div class="row g-4">
-        <!-- Columna Izquierda: El Galón Visual Interactivo -->
         <div class="col-md-5">
           <div class="table-container p-4 text-center">
             <h5 class="fw-bold mb-3" style="font-family: 'Cinzel', serif; color: #3a322d;"><i class="fa-solid fa-oil-can me-2" style="color: #c5a880;"></i> Galón Maestro (20 Litros)</h5>
             
-            <!-- Contenedor Visual del Bidón / Galón -->
             <div class="galon-container mx-auto my-3 position-relative rounded-4 border border-3 border-dark-subtle overflow-hidden shadow-sm" style="width: 160px; height: 280px; background: #fdfbf7;">
-              <!-- Nivel de Líquido Dinámico -->
               <div id="oilLiquidLevel" class="position-absolute bottom-0 w-100 transition-all" style="height: 100%; background: linear-gradient(180deg, #e3c596 0%, #c5a880 100%); opacity: 0.85;"></div>
-              <!-- Tapa del galón -->
               <div class="position-absolute top-0 start-50 translate-middle-x bg-secondary rounded-bottom" style="width: 50px; height: 15px;"></div>
               
-              <!-- Información flotante dentro del galón -->
               <div class="position-absolute top-50 start-50 translate-middle text-center w-100 px-2" style="z-index: 2;">
                 <span id="oilPercentText" class="fw-bold fs-3 text-dark d-block">100%</span>
                 <span id="oilCurrentLitersText" class="small fw-bold text-dark bg-white bg-opacity-75 px-2 rounded">20.0 L</span>
@@ -310,7 +305,6 @@
           </div>
         </div>
 
-        <!-- Columna Derecha: Formulario de Dosificación y Registro de Terapeuta -->
         <div class="col-md-7">
           <div class="table-container p-4 h-100 d-flex flex-column justify-content-between">
             <div>
@@ -344,7 +338,6 @@
               </form>
             </div>
 
-            <!-- Bitácora Rápida de Aceite -->
             <div class="mt-4 pt-3 border-top">
               <h6 class="fw-bold text-muted small mb-2"><i class="fa-solid fa-clock-rotate-left me-1"></i> Últimas Extracciones de Aceite</h6>
               <div class="table-responsive" style="max-height: 150px; overflow-y: auto;">
@@ -539,7 +532,7 @@
     </div>
   </div>
 
-  <!-- MODAL: TICKET / NOTA DE SALIDA DE TURNO -->
+  <!-- MODAL: TICKET / NOTA DE SALIDA -->
   <div class="modal fade" id="dosiTicketModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content border-0 shadow" style="border: 1px solid rgba(197, 168, 128, 0.4) !important; background: #faf8f5;">
@@ -566,7 +559,7 @@
     </div>
   </div>
 
-  <!-- MODAL: HISTORIAL DE DOSIFICACIONES POR DÍA -->
+  <!-- MODAL: HISTORIAL POR DÍA -->
   <div class="modal fade" id="dosiLogModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
       <div class="modal-content border-0 shadow" style="border: 1px solid rgba(197, 168, 128, 0.4) !important; background: #faf8f5;">
@@ -607,7 +600,7 @@
     </div>
   </div>
 
-  <!-- MODAL: HISTORIAL GENERAL CON RANGO DE FECHAS -->
+  <!-- MODAL: HISTORIAL GENERAL -->
   <div class="modal fade" id="historyModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
       <div class="modal-content border-0 shadow" style="border: 1px solid rgba(197, 168, 128, 0.4) !important; background: #faf8f5;">
