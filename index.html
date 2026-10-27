@@ -41,7 +41,7 @@
     </div>
   </header>
 
-  <!-- BARRA DE NAVEGACIÓN POR PESTAÑAS (SIN TENDENCIAS NI GRÁFICOS) -->
+  <!-- BARRA DE NAVEGACIÓN POR PESTAÑAS -->
   <nav class="sub-nav-bar">
     <button class="nav-tab active" id="tab-btn-inicio" onclick="switchTab('inicio')"><i class="fa-solid fa-house"></i> Inicio</button>
     <button class="nav-tab" id="tab-btn-inventario" onclick="switchTab('inventario')"><i class="fa-solid fa-boxes-stacked"></i> Inventario</button>
@@ -95,9 +95,9 @@
         </div>
         <div class="card" onclick="switchTab('aceite')">
           <i class="fa-solid fa-bottle-droplet"></i>
-          <h3>CONTROL DE ACEITE</h3>
-          <p>Supervisa de manera directa los litros, mililitros y mermas de aceites para masajes.</p>
-          <span class="card-link">Gestionar Aceite &rarr;</span>
+          <h3>CONTROL DE ACEITE 20L</h3>
+          <p>Monitoreo dinámico del garrafón de aceite de masajes y registro de terapeutas.</p>
+          <span class="card-link">Garrafón 20L &rarr;</span>
         </div>
       </div>
 
@@ -262,53 +262,96 @@
       </div>
     </section>
 
-    <!-- 5. NUEVA SECCIÓN: CONTROL DE ACEITE -->
+    <!-- 5. CONTROL DINÁMICO DE ACEITE 20 LITROS -->
     <section id="sec-aceite" class="tab-content">
       <div class="section-header-title">
         <div>
-          <h2>CONTROL ESPECÍFICO DE ACEITES Y LUBRICANTES</h2>
-          <p class="subtitle">Gestión detallada de existencias de aceites para masajes y dispensación rápida.</p>
+          <h2>CONTROL DE GARRAFÓN DE ACEITE (20 LITROS)</h2>
+          <p class="subtitle">Descuento dinámico visual en ml por terapeuta y control de recargas del garrafón.</p>
         </div>
+        <button class="btn-gold-action" onclick="refillGallonModal()"><i class="fa-solid fa-arrows-rotate"></i> Rellenar Garrafón a 20L</button>
       </div>
 
       <div class="two-column-layout">
-        <div class="card-box">
-          <h3><i class="fa-solid fa-bottle-droplet"></i> REGISTRAR SALIDA O USO DE ACEITE</h3>
+        
+        <!-- VISUALIZADOR DEL GARRAFÓN -->
+        <div class="card-box text-center">
+          <h3><i class="fa-solid fa-bottle-droplet"></i> ESTADO DEL GARRAFÓN DE ACEITE</h3>
           
-          <div class="form-group">
-            <label>Seleccionar Aceite del Inventario</label>
-            <select id="oil-select-item" class="form-control" onchange="updateOilStockInfo()"></select>
+          <div class="gallon-container">
+            <div class="gallon-cap"></div>
+            <div class="gallon-body">
+              <div id="gallon-liquid" class="gallon-liquid" style="height: 100%;">
+                <div class="gallon-wave"></div>
+              </div>
+              <div class="gallon-label-overlay">
+                <span id="gallon-percent-text">100%</span>
+                <small id="gallon-vol-text">20,000 ml / 20,000 ml</small>
+              </div>
+            </div>
           </div>
 
-          <div class="stock-info-box">
-            <span>Stock Actual en Almacén:</span>
-            <strong id="oil-stock-label">0</strong>
+          <div class="oil-quick-stats">
+            <div class="stat-pill">
+              <span>Nivel Actual:</span>
+              <strong id="oil-liters-left">20.00 L</strong>
+            </div>
+            <div class="stat-pill">
+              <span>Total Usado:</span>
+              <strong id="oil-used-total">0 ml</strong>
+            </div>
           </div>
 
-          <div class="form-group">
-            <label>Cantidad a Descontar (Mililitros / Mililitros Equivalentes)</label>
-            <input type="number" id="oil-qty-input" class="form-control" min="1" value="30">
+          <div class="form-group style-margin-top">
+            <label><strong>DOSIFICAR ACEITE A TERAPEUTA</strong></label>
+            <input type="text" id="therapist-name-input" class="form-control" placeholder="Nombre de la Terapeuta (Ej. Laura)">
           </div>
 
-          <button class="btn-gold-full" onclick="applyOilConsumption()"><i class="fa-solid fa-droplet"></i> Descontar Aceite del Inventario</button>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label>Cantidad (ml)</label>
+              <input type="number" id="oil-dispense-ml" class="form-control" value="50" min="5" step="5">
+            </div>
+            <div class="form-group">
+              <label>Acción Rápida</label>
+              <div class="quick-btn-row">
+                <button class="btn-chip" onclick="setDispenseQty(30)">30 ml</button>
+                <button class="btn-chip" onclick="setDispenseQty(50)">50 ml</button>
+                <button class="btn-chip" onclick="setDispenseQty(100)">100 ml</button>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn-gold-full" onclick="dispenseOilToTherapist()"><i class="fa-solid fa-droplet"></i> REGISTRAR SALIDA Y DESCONTAR</button>
         </div>
 
+        <!-- BITÁCORA Y HISTORIAL POR TERAPEUTA -->
         <div class="card-box">
-          <h3><i class="fa-solid fa-list-ul"></i> RESUMEN DE ACEITES REGISTRADOS</h3>
-          <p class="subtitle" style="margin-bottom: 15px;">Listado filtrado de artículos identificados como aceites en el inventario:</p>
-          <table class="data-table-sm">
-            <thead>
-              <tr>
-                <th>Nombre del Aceite</th>
-                <th>Ubicación</th>
-                <th>Stock Disponible</th>
-              </tr>
-            </thead>
-            <tbody id="oil-catalog-list">
-              <tr><td colspan="3" style="text-align:center; color:#888;">Cargando aceites...</td></tr>
-            </tbody>
-          </table>
+          <h3><i class="fa-solid fa-clipboard-user"></i> REGISTRO DE SALIDAS POR TERAPEUTA</h3>
+          
+          <div class="search-bar" style="margin-bottom: 12px;">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="oil-log-search" placeholder="Buscar por terapeuta..." onkeyup="renderOilLogsTable()">
+          </div>
+
+          <div class="table-card" style="max-height: 400px; overflow-y: auto; padding: 0; border: none; box-shadow: none;">
+            <table class="data-table-sm">
+              <thead>
+                <tr>
+                  <th>Fecha/Hora</th>
+                  <th>Terapeuta</th>
+                  <th>Cantidad</th>
+                  <th>Remanente</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody id="oil-logs-tbody">
+                <tr><td colspan="5" style="text-align:center; color:#888;">No hay consumos registrados en este garrafón.</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
+
       </div>
     </section>
 
@@ -354,17 +397,6 @@
         <h3><i class="fa-solid fa-clock-rotate-left"></i> Historial General de Movimientos</h3>
         <button class="close-btn" onclick="closeHistorialModal()">&times;</button>
       </div>
-      <div class="history-filter-bar">
-        <div class="form-group">
-          <label>Desde Fecha</label>
-          <input type="date" id="hist-date-from" class="form-control" onchange="renderHistorialModalTable()">
-        </div>
-        <div class="form-group">
-          <label>Hasta Fecha</label>
-          <input type="date" id="hist-date-to" class="form-control" onchange="renderHistorialModalTable()">
-        </div>
-        <button class="btn-tool" onclick="clearHistorialFilters()">Limpiar Filtro</button>
-      </div>
 
       <div class="table-card max-height-table">
         <table class="data-table-sm">
@@ -396,7 +428,7 @@
       </div>
       <div class="form-group">
         <label>Nombre del Artículo</label>
-        <input type="text" id="add-item-name" class="form-control" placeholder="Ej. Aceite para Masajes">
+        <input type="text" id="add-item-name" class="form-control" placeholder="Ej. Aceite para Masajes 20L">
       </div>
       <div class="form-group">
         <label>Ubicación</label>
@@ -414,7 +446,7 @@
       </div>
       <div class="form-group">
         <label>Stock Inicial</label>
-        <input type="number" id="add-item-stock" class="form-control" value="500">
+        <input type="number" id="add-item-stock" class="form-control" value="20000">
       </div>
       <button class="btn-gold-full" onclick="saveNewItem()">Guardar Artículo</button>
     </div>
