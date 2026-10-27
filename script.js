@@ -1,5 +1,5 @@
 // ==============================================================================
-// SHIFRA SPA - CÓDIGO COMPLETO Y TOTALMENTE ESTABILIZADO
+// SHIFRA SPA - CÓDIGO COMPLETO (CON MÓDULO DE ACEITE INTEGRADO)
 // ==============================================================================
 
 const SUPABASE_URL = 'https://uhkahspaqwcldvutzmnm.supabase.co';
@@ -12,15 +12,12 @@ let inventory = [];
 let historyLogs = [];
 let dosiPendingList = [];
 let servicesCatalog = [
-  { name: 'PEDI SPA', recipe: [{ name: '"NAHA" ICE MINT', qty: 10, unit: 'Gramos' }] },
-  { name: 'MANI SPA', recipe: [{ name: '"NAHA" ICE MINT', qty: 10, unit: 'Gramos' }] },
-  { name: 'LIMPIEZA PROFUNDA', recipe: [{ name: '"CABINA" LECHE LIMPIADORA PIEL MIXTA', qty: 4, unit: 'Mililitros' }] }
+  { name: 'PEDI SPA', recipe: [{ name: 'Aceite para Masajes', qty: 30, unit: 'ml' }] },
+  { name: 'MANI SPA', recipe: [{ name: 'Aceite para Masajes', qty: 20, unit: 'ml' }] }
 ];
 let currentRecipeTemp = [];
 
 let selectedLocationFilter = 'TODOS';
-let chartSkusInstance = null;
-let chartVolumeInstance = null;
 
 // INICIALIZACIÓN
 window.addEventListener('DOMContentLoaded', () => {
@@ -125,7 +122,10 @@ function switchTab(tabId) {
   if (targetSec) targetSec.classList.add('active');
   if (targetBtn) targetBtn.classList.add('active');
 
-  if (tabId === 'graficos') renderCharts();
+  if (tabId === 'aceite') {
+    populateOilDropdown();
+    renderOilCatalogTable();
+  }
 }
 
 function renderAllViews() {
@@ -137,7 +137,8 @@ function renderAllViews() {
   populateDosiDropdown();
   renderServicesCatalog();
   populateServiceSelect();
-  populateTrendSelect();
+  populateOilDropdown();
+  renderOilCatalogTable();
 }
 
 function updateMetrics() {
@@ -151,16 +152,6 @@ function updateMetrics() {
   if (mSkus) mSkus.innerText = skus || 490;
   if (mStock) mStock.innerText = stock || 47653;
   if (invTotal) invTotal.innerText = skus || 490;
-
-  const gSkus = document.getElementById('g-skus');
-  const gStock = document.getElementById('g-stock');
-  const gStores = document.getElementById('g-stores');
-
-  if (gSkus) gSkus.innerText = skus || 490;
-  if (gStock) gStock.innerText = stock || 47653;
-
-  const locations = [...new Set(inventory.map(i => (i.detail || 'Almacen General').trim()))].length;
-  if (gStores) gStores.innerText = locations;
 }
 
 // INVENTARIO Y FILTROS POR UBICACIÓN
@@ -348,7 +339,7 @@ function confirmClearInventory() {
   }
 }
 
-// DOSIFICACIÓN: FILTRADO RÁPIDO EXCLUSIVAMENTE POR ÁREA
+// DOSIFICACIÓN: FILTRADO RÁPIDO POR ÁREA
 function populateDosiLocationFilter() {
   const select = document.getElementById('dosi-filter-location');
   if (!select) return;
@@ -473,7 +464,7 @@ function confirmDosiBatch() {
 }
 
 // ==============================================================================
-// GESTIÓN DE SERVICIOS Y RECETAS (CREAR, EDITAR, ELIMINAR Y APLICAR)
+// GESTIÓN DE SERVICIOS Y RECETAS
 // ==============================================================================
 
 function populateServiceSelect() {
@@ -690,80 +681,94 @@ function applyServiceToStock() {
   showToast(`Servicio "${service.name}" aplicado correctamente.`);
 }
 
-// TENDENCIAS
-function populateTrendSelect() {
-  const select = document.getElementById('trend-item-select');
+// ==============================================================================
+// NUEVO MÓDULO: CONTROL ESPECÍFICO DE ACEITE
+// ==============================================================================
+
+function populateOilDropdown() {
+  const select = document.getElementById('oil-select-item');
   if (!select) return;
   select.innerHTML = '';
-  inventory.forEach(i => {
+
+  // Filtrar artículos que contengan la palabra "aceite" o similar
+  const oilItems = inventory.filter(i => (i.name || '').toLowerCase().includes('aceite') || (i.name || '').toLowerCase().includes('oil'));
+
+  if (oilItems.length === 0) {
+    // Si no hay ninguno filtrado, mostrar todo el inventario por flexibilidad
+    inventory.forEach(i => {
+      oilItems.push(i);
+    });
+  }
+
+  oilItems.forEach(item => {
     const opt = document.createElement('option');
-    opt.value = i.name;
-    opt.innerText = `${i.name} (${(i.detail || 'General').toUpperCase()})`;
+    opt.value = item.name;
+    opt.innerText = `${item.name} (${item.detail || 'General'}) — Stock: ${item.stock} ${item.unit || 'Piezas'}`;
     select.appendChild(opt);
   });
+
+  updateOilStockInfo();
 }
 
-function loadItemTrendDetails() {
-  const select = document.getElementById('trend-item-select');
+function updateOilStockInfo() {
+  const select = document.getElementById('oil-select-item');
   if (!select) return;
   const name = select.value;
-  const logs = historyLogs.filter(h => h.item === name);
+  const item = inventory.find(i => i.name === name);
+  const label = document.getElementById('oil-stock-label');
+  if (label) {
+    const stockVal = item ? item.stock : 0;
+    const unitVal = item ? (item.unit || 'Piezas') : 'Piezas';
+    label.innerText = `${stockVal} ${unitVal}`;
+  }
+}
 
-  const tbody = document.getElementById('trend-history-tbody');
+function applyOilConsumption() {
+  const select = document.getElementById('oil-select-item');
+  if (!select || !select.value) return alert('Selecciona un aceite.');
+
+  const name = select.value;
+  const qty = Number(document.getElementById('oil-qty-input').value) || 0;
+  if (qty <= 0) return alert('Ingresa una cantidad válida a descontar.');
+
+  const item = inventory.find(i => i.name === name);
+  if (!item) return;
+
+  item.stock = Math.max(0, Number(item.stock || 0) - qty);
+
+  const now = new Date();
+  historyLogs.unshift({
+    dateRaw: now.toLocaleDateString('es-MX'),
+    time: now.toLocaleTimeString('es-MX'),
+    type: 'Control de Aceite',
+    item: item.name,
+    detail: `Uso/Salida de aceite: -${qty} ${item.unit || 'ml'} (${item.detail || 'General'})`
+  });
+
+  saveAndSync();
+  showToast(`Se descontaron ${qty} ${item.unit || 'ml'} de ${item.name}.`);
+  updateOilStockInfo();
+  renderOilCatalogTable();
+}
+
+function renderOilCatalogTable() {
+  const tbody = document.getElementById('oil-catalog-list');
   if (!tbody) return;
   tbody.innerHTML = '';
 
-  logs.forEach(l => {
+  const oilItems = inventory.filter(i => (i.name || '').toLowerCase().includes('aceite') || (i.name || '').toLowerCase().includes('oil'));
+  
+  const displayList = oilItems.length > 0 ? oilItems : inventory;
+
+  displayList.forEach(item => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${l.dateRaw}</td>
-      <td>${l.time}</td>
-      <td><span class="badge-tag">${l.item}</span></td>
-      <td><strong style="color:var(--danger-main);">${l.detail}</strong></td>
+      <td><strong>${item.name}</strong></td>
+      <td>${item.detail || 'General'}</td>
+      <td><strong>${item.stock} ${item.unit || 'Piezas'}</strong></td>
     `;
     tbody.appendChild(tr);
   });
-
-  const totalVal = document.getElementById('trend-total-val');
-  if (totalVal) {
-    const totalQty = logs.reduce((sum, l) => {
-      const match = l.detail.match(/-([0-9.]+)/);
-      return sum + (match ? Number(match[1]) : 0);
-    }, 0);
-    totalVal.innerText = `${totalQty} Piezas`;
-  }
-}
-
-// GRÁFICOS
-function renderCharts() {
-  const locations = [...new Set(inventory.map(i => i.detail || 'General'))];
-  const skuCounts = locations.map(l => inventory.filter(i => (i.detail || 'General') === l).length);
-  const volumeCounts = locations.map(l => inventory.filter(i => (i.detail || 'General') === l).reduce((a, b) => a + Number(b.stock), 0));
-
-  if (chartSkusInstance) chartSkusInstance.destroy();
-  if (chartVolumeInstance) chartVolumeInstance.destroy();
-
-  const ctxSkus = document.getElementById('chart-skus');
-  if (ctxSkus) {
-    chartSkusInstance = new Chart(ctxSkus.getContext('2d'), {
-      type: 'doughnut',
-      data: {
-        labels: locations,
-        datasets: [{ data: skuCounts, backgroundColor: ['#a88d55', '#333333', '#3498db', '#e74c3c'] }]
-      }
-    });
-  }
-
-  const ctxVol = document.getElementById('chart-volume');
-  if (ctxVol) {
-    chartVolumeInstance = new Chart(ctxVol.getContext('2d'), {
-      type: 'bar',
-      data: {
-        labels: locations,
-        datasets: [{ label: 'Piezas Total', data: volumeCounts, backgroundColor: '#bda26b' }]
-      }
-    });
-  }
 }
 
 // MODALES
@@ -807,7 +812,7 @@ function closeAddModal() { document.getElementById('modal-add-item').style.displ
 function saveNewItem() {
   const name = document.getElementById('add-item-name').value.trim();
   const detail = document.getElementById('add-item-location').value.trim() || 'Almacen General';
-  const unit = document.getElementById('add-item-unit').value.trim() || 'Piezas';
+  const unit = document.getElementById('add-item-unit').value.trim() || 'ml';
   const stock = Number(document.getElementById('add-item-stock').value) || 0;
   const price = Number(document.getElementById('add-item-price').value) || 0;
 
