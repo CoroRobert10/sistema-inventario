@@ -6,8 +6,7 @@
   --gold-main: #bda26b;
   --gold-dark: #8c733e;
   --gold-light: #f4efe6;
-  --bg-creme: #fcfb98;
-  --bg-app: #f7f6f2;
+  --bg-app: #fbf9f4;
   --dark-main: #2b2b2b;
   --dark-card: #ffffff;
   --text-dark: #333333;
@@ -96,6 +95,17 @@ body {
 
 .btn-cover { background: #fff; border: 1px solid #ccc; color: #555; }
 .btn-cover:hover { background: #eee; }
+
+.btn-tool-border {
+  background: #ffffff;
+  border: 1px solid #333;
+  color: #333;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+}
 
 /* BARRA DE PESTAÑAS */
 .sub-nav-bar {
@@ -269,6 +279,7 @@ body {
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-soft);
   cursor: pointer;
+  text-align: center;
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
@@ -302,13 +313,14 @@ body {
 }
 
 /* METRICAS */
-.metrics-grid {
+.metrics-grid, .metrics-grid-2 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 15px;
+  margin-bottom: 20px;
 }
 
-.metric-card {
+.metric-card, .metric-card-sm {
   background: #ffffff;
   padding: 16px;
   border-radius: var(--radius-md);
@@ -316,15 +328,15 @@ body {
   text-align: center;
 }
 
-.metric-label {
+.metric-label, .metric-label-sm {
   font-size: 11px;
   font-weight: 700;
   color: var(--text-muted);
   letter-spacing: 0.5px;
 }
 
-.metric-val {
-  font-size: 24px;
+.metric-val, .metric-val-sm {
+  font-size: 26px;
   font-weight: 700;
   color: var(--gold-dark);
   margin-top: 5px;
@@ -403,16 +415,26 @@ body {
 }
 
 .btn-icon {
-  background: transparent;
-  border: none;
-  color: #555;
+  background: #f7f7f7;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: #333;
   cursor: pointer;
-  padding: 4px 8px;
-  font-size: 14px;
+  padding: 5px 9px;
+  font-size: 12px;
+  transition: all 0.15s;
+}
+
+.btn-icon:hover {
+  background: #e2e2e2;
 }
 
 .btn-icon.delete {
   color: var(--danger-main);
+}
+
+.btn-icon.delete:hover {
+  background: #fde8e8;
 }
 
 .action-btn-group {
@@ -444,6 +466,25 @@ body {
 
 .form-control:focus {
   border-color: var(--gold-main);
+}
+
+.stock-info-box {
+  background: var(--gold-light);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--gold-dark);
+  margin-bottom: 15px;
+}
+
+.recipe-preview-box {
+  background: #fdfdfd;
+  border: 1px dashed var(--border-color);
+  padding: 12px;
+  border-radius: var(--radius-md);
+  margin-bottom: 15px;
 }
 
 .two-column-layout {
@@ -479,9 +520,9 @@ body {
 }
 
 .pill.active {
-  background: var(--gold-main);
+  background: var(--dark-main);
   color: #fff;
-  border-color: var(--gold-main);
+  border-color: var(--dark-main);
 }
 
 .search-filter-row {
