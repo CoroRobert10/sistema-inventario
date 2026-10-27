@@ -2,6 +2,7 @@
   --shifra-gold: #c5a880;
   --shifra-dark: #3a322d;
   --shifra-bg: #faf8f5;
+  --shifra-dark-bg: radial-gradient(circle, #4a3e36 0%, #2b2420 100%);
 }
 
 body {
@@ -12,12 +13,12 @@ body {
   padding: 0;
 }
 
-/* Portada Estilo Shifra Spa */
-.portada-overlay {
-  background: radial-gradient(circle, #4a3e36 0%, #2b2420 100%) !important;
+/* Portada y Menú Oscuro */
+.portada-overlay, .inicio-dark-container {
+  background: var(--shifra-dark-bg) !important;
 }
 
-.portada-card {
+.portada-card, .bg-dark-card, .stat-card-dark {
   background: #352d28 !important;
   border: 1px solid rgba(197, 168, 128, 0.4) !important;
   box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
@@ -42,16 +43,16 @@ body {
 /* Tarjetas del Inicio */
 .home-card {
   transition: all 0.25s ease;
-  border: 1px solid rgba(197, 168, 128, 0.25) !important;
+  border: 1px solid rgba(197, 168, 128, 0.3) !important;
 }
 
 .home-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(197, 168, 128, 0.2) !important;
+  box-shadow: 0 8px 25px rgba(197, 168, 128, 0.3) !important;
   border-color: var(--shifra-gold) !important;
 }
 
-/* Pestallas de Ubicaciones */
+/* Pestañas de Ubicaciones */
 .warehouse-tabs {
   display: flex;
   gap: 8px;
@@ -89,9 +90,7 @@ body {
   border-radius: 10px !important;
   padding: 18px !important;
   box-shadow: 0 4px 12px rgba(58, 50, 45, 0.04) !important;
-  border-top: 1px solid rgba(197, 168, 128, 0.2) !important;
-  border-right: 1px solid rgba(197, 168, 128, 0.2) !important;
-  border-bottom: 1px solid rgba(197, 168, 128, 0.2) !important;
+  border: 1px solid rgba(197, 168, 128, 0.2) !important;
 }
 
 .table-container {
