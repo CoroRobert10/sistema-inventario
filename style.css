@@ -2,8 +2,6 @@
   --shifra-gold: #c5a880;
   --shifra-dark: #3a322d;
   --shifra-bg: #faf8f5;
-  --shifra-card-bg: #ffffff;
-  --shifra-border: rgba(197, 168, 128, 0.35);
 }
 
 body {
@@ -14,33 +12,58 @@ body {
   padding: 0;
 }
 
+/* Portada Estilo Shifra Spa */
+.portada-overlay {
+  background: radial-gradient(circle, #4a3e36 0%, #2b2420 100%) !important;
+}
+
+.portada-card {
+  background: #352d28 !important;
+  border: 1px solid rgba(197, 168, 128, 0.4) !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+}
+
+/* Barra Superior */
 .top-nav {
   background: #ffffff !important;
-  border-bottom: 1px solid var(--shifra-border) !important;
-  padding: 12px 28px !important;
-  box-shadow: 0 4px 15px rgba(58, 50, 45, 0.05) !important;
+  border-bottom: 1px solid rgba(197, 168, 128, 0.3) !important;
+  padding: 10px 24px !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.03) !important;
 }
 
 .brand-title {
   font-family: 'Cinzel', serif !important;
   font-weight: 700 !important;
-  font-size: 1.35rem !important;
+  font-size: 1.25rem !important;
   color: var(--shifra-dark) !important;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
 }
 
+/* Tarjetas del Inicio */
+.home-card {
+  transition: all 0.25s ease;
+  border: 1px solid rgba(197, 168, 128, 0.25) !important;
+}
+
+.home-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(197, 168, 128, 0.2) !important;
+  border-color: var(--shifra-gold) !important;
+}
+
+/* Pestallas de Ubicaciones */
 .warehouse-tabs {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   overflow-x: auto;
-  padding-bottom: 6px;
+  padding-bottom: 5px;
 }
 
 .warehouse-tab {
   background: #ffffff !important;
   border: 1px solid #d4c5b9 !important;
-  color: #6e6056 !important;
-  padding: 8px 18px !important;
+  color: #7a6e65 !important;
+  padding: 6px 16px !important;
   border-radius: 20px !important;
   font-size: 0.85rem !important;
   font-weight: 600 !important;
@@ -61,30 +84,29 @@ body {
 }
 
 .stat-card {
-  background: var(--shifra-card-bg) !important;
-  border-left: 5px solid var(--shifra-gold) !important;
-  border-radius: 12px !important;
-  padding: 22px !important;
-  box-shadow: 0 4px 15px rgba(58, 50, 45, 0.04) !important;
-  border-top: 1px solid rgba(197, 168, 128, 0.15) !important;
-  border-right: 1px solid rgba(197, 168, 128, 0.15) !important;
-  border-bottom: 1px solid rgba(197, 168, 128, 0.15) !important;
+  background: #ffffff !important;
+  border-left: 4px solid var(--shifra-gold) !important;
+  border-radius: 10px !important;
+  padding: 18px !important;
+  box-shadow: 0 4px 12px rgba(58, 50, 45, 0.04) !important;
+  border-top: 1px solid rgba(197, 168, 128, 0.2) !important;
+  border-right: 1px solid rgba(197, 168, 128, 0.2) !important;
+  border-bottom: 1px solid rgba(197, 168, 128, 0.2) !important;
 }
 
 .table-container {
-  background: var(--shifra-card-bg) !important;
-  border-radius: 16px !important;
-  padding: 24px !important;
-  box-shadow: 0 6px 20px rgba(58, 50, 45, 0.05) !important;
-  border: 1px solid var(--shifra-border) !important;
+  background: #ffffff !important;
+  border-radius: 12px !important;
+  padding: 20px !important;
+  box-shadow: 0 4px 15px rgba(58, 50, 45, 0.04) !important;
+  border: 1px solid rgba(197, 168, 128, 0.25) !important;
 }
 
 .search-box-spa {
   background: #ffffff !important;
   border: 1px solid #d4c5b9 !important;
   border-radius: 30px !important;
-  padding: 8px 20px !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.02) !important;
+  padding: 6px 16px !important;
 }
 
 .btn-shifra-gold {
@@ -92,8 +114,6 @@ body {
   color: #ffffff !important;
   border: none !important;
   font-weight: 600 !important;
-  border-radius: 8px !important;
-  box-shadow: 0 2px 6px rgba(197, 168, 128, 0.4) !important;
 }
 
 .btn-shifra-gold:hover {
@@ -110,30 +130,7 @@ body {
 .table th {
   background-color: #efe7dc !important;
   color: var(--shifra-dark) !important;
-  font-size: 0.82rem !important;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
+  font-size: 0.8rem !important;
   font-weight: 700 !important;
-  padding: 12px 16px !important;
-  border: none !important;
-}
-
-.table td {
-  padding: 14px 16px !important;
-  vertical-align: middle !important;
-  border-bottom: 1px solid #f0e8df !important;
-}
-
-.badge-low {
-  background-color: #dc3545 !important;
-  color: #ffffff !important;
-  font-weight: 600 !important;
-  border-radius: 6px !important;
-}
-
-.badge-stock {
-  background-color: #198754 !important;
-  color: #ffffff !important;
-  font-weight: 600 !important;
-  border-radius: 6px !important;
+  padding: 12px !important;
 }
